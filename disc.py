@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands as cmds
 from dotenv import load_dotenv
 import speech_recognition as sr
-import urllib.parse
 import openai
 import pyttsx3
 import asyncio
@@ -35,26 +34,27 @@ def trans(say):
 
 def voice(data):
     url = "https://freetts.com/api/TTS/SynthesizeText"
+
     payload = json.dumps({
     "text": data,
     "type": 0,
     "ssml": 0,
-    "isLoginUser": 0,
+    "isLoginUser": 1,
     "country": "Japanese (Japan)",
     "voiceType": "Standard",
     "languageCode": "ja-JP",
-    "voiceName": "ja-JP-Standard-B",
+    "voiceName": "ja-JP-Standard-A",
     "gender": "FEMALE"
     })
     headers = {
     'authority': 'freetts.com',
     'accept': 'application/json, text/plain, */*',
     'accept-language': 'en,th-TH;q=0.9,th;q=0.8',
-    'authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjI1NDM3NTcxNjQsImlhdCI6MTY3OTc1NzE1NCwiaXNzIjoia2VuIiwiZGF0YSI6eyJ1c2VybmFtZSI6IjE3Mi42OC4xODkuMTQ1IiwiaWQiOiIxNzIuNjguMTg5LjE0NSIsImxvZ2luX3RpbWUiOjE2Nzk3NTcxNTR9fQ.6-5FqmngwbhtgIfheFipCoXCK_TAQPZCgmMPMh5SZ9I',
+    'authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjI1NDM3Njc2NjQsImlhdCI6MTY3OTc2NzY1NCwiaXNzIjoia2VuIiwiZGF0YSI6eyJ1c2VybmFtZSI6IndvbmdjaGFpdGEwM0BnbWFpbC5jb20iLCJpZCI6IjY0MWYzODY2NGU0ZTQ5MmQzZmRiZTdjZiIsImxvZ2luX3RpbWUiOjE2Nzk3Njc2NTR9fQ.UL4mi8xuE3h4bfR-uWpBmSGAa0lqreDZSujFRg_rF90',
     'content-type': 'application/json',
     'cookie': '_ga=GA1.2.1262120938.1679757155; _gid=GA1.2.1619799717.1679757155',
     'origin': 'https://freetts.com',
-    'referer': 'https://freetts.com/Text-to-Speech/JapaneseTTS',
+    'referer': 'https://freetts.com/',
     'sec-ch-ua': '"Google Chrome";v="111", "Not(A:Brand";v="8", "Chromium";v="111"',
     'sec-ch-ua-mobile': '?0',
     'sec-ch-ua-platform': '"Windows"',
@@ -111,27 +111,28 @@ async def join(ctx: cmds.Context, channel: discord.VoiceChannel):
         return await ctx.voice_client.move_to(channel)
 
     await channel.connect()
-    await ctx.respond(f"Joined {channel}")
+    await ctx.respond(f"``` {bot.user} has joined '{channel}' ```")
 
 @bot.slash_command(guild_ids=ids)
 async def chat(interaction: discord.Interaction):
-    await interaction.respond("I'm listening...")
+    await interaction.respond("``` voice chat on ```")
     while True:
+        await interaction.respond("> listening")
         query = stt().lower()
         if "stop" in query:
             break
         if ">>" in query:
             continue
-        
+        await interaction.send("> generating")
         say = await text_gen(query)
         source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(voice(trans(say))))
-        await interaction.respond(say)
+        await interaction.send(say)
         interaction.voice_client.play(source)
 
         while interaction.voice_client.is_playing():
             await asyncio.sleep(1)
 
-    await interaction.send("oke bye~ 👋")
+    await interaction.respond("``` voice chat off ```")
     await interaction.voice_client.disconnect(force=True)
 
 @bot.slash_command(guild_ids=ids)
