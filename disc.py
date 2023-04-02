@@ -1,4 +1,5 @@
 import discord
+from discord import Intents
 from discord.ext import commands as cmds
 from dotenv import load_dotenv
 import speech_recognition as sr
@@ -18,7 +19,8 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 guld_ids = (os.getenv('GUILD_IDS')).split(', ')
 ids = [int(x) for x in guld_ids]
 key = os.getenv('OPENAI_KEY')
-bot = discord.Bot()
+intents = Intents().all()
+bot = cmds.Bot(command_prefix='>>', intents=intents)
 openai.api_key = key
 
 def trans(say):
@@ -105,40 +107,40 @@ async def text_gen(param):
 async def on_ready():
     print(f"{bot.user} ready")
 
-@bot.slash_command(guild_ids=ids)
-async def join(ctx: cmds.Context, channel: discord.VoiceChannel):
+@bot.hybrid_command(guild_ids=ids)
+async def join(ctx, channel: discord.VoiceChannel):
     if ctx.voice_client is not None:
         return await ctx.voice_client.move_to(channel)
-
+    
     await channel.connect()
-    await ctx.respond(f"``` {bot.user} has joined '{channel}' ```")
 
-@bot.slash_command(guild_ids=ids)
-async def chat(interaction: discord.Interaction):
-    await interaction.respond("``` voice chat on ```")
+    await ctx.send(f"``` {bot.user} has joined '{channel}' ```")
+    await ctx.send("``` voice chat on ```")
+
     while True:
-        await interaction.respond("> listening")
+        await ctx.send("> listening")
         query = stt().lower()
         if "stop" in query:
+            await ctx.channel.send("> leaving..")
             break
         if ">>" in query:
             continue
-        await interaction.send("> generating")
+
+        await ctx.channel.send("> generating")
         say = await text_gen(query)
         source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(voice(trans(say))))
-        await interaction.send(say)
-        interaction.voice_client.play(source)
+        await ctx.channel.send(say)
+        ctx.voice_client.play(source)
 
-        while interaction.voice_client.is_playing():
+        while ctx.voice_client.is_playing():
             await asyncio.sleep(1)
 
-    await interaction.respond("``` voice chat off ```")
-    await interaction.voice_client.disconnect(force=True)
+    await ctx.send("``` voice chat off ```")
+    await ctx.voice_client.disconnect(force=True)
 
-@bot.slash_command(guild_ids=ids)
+@bot.hybrid_command(guild_ids=ids)
 async def type(interaction: discord.Interaction, message: str):
     say = await text_gen(message)
-    await interaction.respond(say)
+    await interaction.send(say)
 
 bot.run(TOKEN)
-
