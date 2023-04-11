@@ -11,7 +11,7 @@ import json
 import os
 import time
 
-with open('habit.txt', "r") as file:
+with open('prompts/Rem.txt', "r") as file:
     mode = file.read()
 
 messages  = [
@@ -31,7 +31,7 @@ intents = Intents().all()
 bot = cmds.Bot(command_prefix='>>', intents=intents)
 openai.api_key = key
 
-save_foldername = 'memory'
+save_foldername = 'history'
 keyword = 'hey'
 timescoped = 5
 
