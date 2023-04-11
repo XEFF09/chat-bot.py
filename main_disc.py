@@ -11,13 +11,16 @@ import json
 import os
 import time
 
-with open('prompts/Rem.txt', "r") as file:
-    mode = file.read()
+# settings
 
-messages  = [
-    {"role": "system", "content": f"{mode}"}
-]
-    
+character = 'Rem'
+keyword = 'hey'
+timescoped = 5
+
+# variables
+
+save_foldername = 'history'
+
 engine = pyttsx3.init('sapi5')
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[0].id)
@@ -31,9 +34,14 @@ intents = Intents().all()
 bot = cmds.Bot(command_prefix='>>', intents=intents)
 openai.api_key = key
 
-save_foldername = 'history'
-keyword = 'hey'
-timescoped = 5
+# defualt functions
+
+def charSet():
+    with open(f'prompts/{character}.txt', "r") as file:
+        mode = file.read()
+
+    messages  = [{"role": "system", "content": f"{mode}"}]
+    return messages
 
 def trans(say):
     url = "https://translated-mymemory---translation-memory.p.rapidapi.com/get"
@@ -80,7 +88,7 @@ def voice(data):
     res = json.loads(response.text)['data']['audiourl']
     return res
     
-def textGen(messages):
+def textGen(messages=charSet()):
     url = "https://api.openai.com/v1/chat/completions"
     payload = json.dumps({
     "model": "gpt-3.5-turbo",
@@ -96,7 +104,7 @@ def textGen(messages):
     messages.append({"role": "system", "content": f"{data}"})
     return data
 
-def memorize(suffix, save_foldername, messages):
+def memorize(suffix, save_foldername, messages=charSet()):
     os.makedirs(save_foldername, exist_ok=True)
     base_filename = 'conversation'
     filename = os.path.join(save_foldername, f'{base_filename}_{suffix}.txt')
@@ -106,7 +114,7 @@ def memorize(suffix, save_foldername, messages):
 def waitHey(keyword='hey'):
     r = sr.Recognizer()
     mic = sr.Microphone()
-    print("\ninitiated:")
+    print("\ninitializing:")
     while True:
         with mic as source:
             try:
@@ -133,7 +141,7 @@ def listenFor(timeout:int=30):
 
     return audio
 
-def getSuffix(save_foldername:str):
+def getSuffix(save_foldername:str, messages=charSet()):
     os.makedirs(save_foldername, exist_ok=True)
     base_filename = 'conversation'
     suffix = 0
@@ -144,6 +152,8 @@ def getSuffix(save_foldername:str):
     with open(filename, 'w', encoding = 'utf-8') as file:
         json.dump(messages, file, indent=4, ensure_ascii=False)
     return suffix
+
+# async functions
 
 @bot.event
 async def on_ready():
@@ -157,15 +167,19 @@ async def join(ctx, channel: discord.VoiceChannel):
     await channel.connect()
     await ctx.send(f"``` {bot.user} has joined '{channel}' ```")
     await ctx.send("``` voice chat on ```")
-    messages = [{"role": "system", "content": f"{mode}"}]
-
+    messages = charSet()
 
     while True:
+        discon = 0
+        await ctx.send("> initializing")
         waitHey(keyword=keyword)
         suffix = getSuffix(save_foldername)
         start_time = time.time()
         while True:
-            await ctx.send("> listening")
+            if discon:
+                break
+
+            await ctx.channel.send("> listening")
             print("\nlistening:")
             audio = listenFor()
             try:
@@ -174,7 +188,7 @@ async def join(ctx, channel: discord.VoiceChannel):
                 messages.append({"role" : "user", "content" : query})
             except :
                 if time.time() - start_time > timescoped:
-                    await ctx.send("> ~listening")
+                    await ctx.channel.send("> ~listening")
                     print("\n~listening:")
                     break
                 continue
@@ -185,7 +199,8 @@ async def join(ctx, channel: discord.VoiceChannel):
                 await ctx.channel.send("> leaving..")
                 await ctx.send("``` voice chat off ```")
                 await ctx.voice_client.disconnect(force=True)
-                raise SystemExit
+                discon = 1
+                continue
             
             try:
                 await ctx.channel.send("> generating")
@@ -201,5 +216,9 @@ async def join(ctx, channel: discord.VoiceChannel):
                 print(f"{e}")
                 print("Token limit exceeded, clearing messsages list and restarting")
                 suffix = getSuffix(save_foldername)
+
+
+        if discon:
+            continue
 
 bot.run(TOKEN)
