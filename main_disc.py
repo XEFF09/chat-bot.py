@@ -14,12 +14,17 @@ import time
 # settings
 
 character = 'Rem'
-keyword = 'hey'
+keyword = 'listen'
 timescoped = 5
+path = 'history'
+speechLang = 'en-US' # th-TH
+
+if path != 'prompts':
+    memIdx = int(input(f'enter memIdx for {character} (0-inf): '))
 
 # variables
 
-save_foldername = 'history'
+save_foldername = f'history/{character}'
 
 engine = pyttsx3.init('sapi5')
 voices = engine.getProperty('voices')
@@ -37,15 +42,26 @@ openai.api_key = key
 # defualt functions
 
 def charSet():
-    with open(f'prompts/{character}.txt', "r") as file:
+    if path == 'prompts':
+        mount = '.txt'
+        perm = 1
+    else:
+        mount = f'/conversation_{memIdx}.txt'
+        perm = 0
+
+    with open(f'{path}/{character}{mount}', "r", encoding='utf-8') as file:
         mode = file.read()
 
-    messages  = [{"role": "system", "content": f"{mode}"}]
+    if perm:
+        messages  = [{"role": "system", "content": f"{mode}"}]
+    else:
+        messages = json.loads(mode)
+
     return messages
 
 def trans(say):
     url = "https://translated-mymemory---translation-memory.p.rapidapi.com/get"
-    querystring = {"langpair":"en|ja","q":say,"mt":"1","onlyprivate":"0","de":"a@b.c"}
+    querystring = {"langpair":"en|th","q":say,"mt":"1","onlyprivate":"0","de":"a@b.c"}
     headers = {
         "X-RapidAPI-Key": "1f678aafcdmshd6d45bc81882a00p18750djsnefc88f21f555",
         "X-RapidAPI-Host": "translated-mymemory---translation-memory.p.rapidapi.com"
@@ -111,27 +127,26 @@ def memorize(suffix, save_foldername, messages=charSet()):
     with open(filename, 'w', encoding = 'utf-8') as file:
         json.dump(messages, file, indent=4, ensure_ascii=False)
 
-def waitHey(keyword='hey'):
+def waitListen(keyword=keyword):
     r = sr.Recognizer()
     mic = sr.Microphone()
     print("\ninitializing:")
     while True:
         with mic as source:
+            r.adjust_for_ambient_noise(source, duration=0.5)
+            audio = r.listen(source)
             try:
-                r.pause_threshold = 1
-                r.adjust_for_ambient_noise(source, duration=0.5)
-                audio = r.listen(source)
-                query = r.recognize_google(audio).lower()
-                if keyword in query:
-                    break
-
-            except sr.UnknownValueError:
-                print("voice cracked")
+                query = r.recognize_google(audio, language=speechLang)
+            except:
                 continue
-            except sr.RequestError as e:
-                print(f"GSR service issued; {e}")
+            if f"{keyword}" in query.lower():
+                print("true")
+                break
+            if "disconnect" in query.lower():
+                return 'disconnect'
+            else:
                 continue
-
+            
 def listenFor(timeout:int=30):
     r = sr.Recognizer()
     mic = sr.Microphone()
@@ -165,16 +180,24 @@ async def join(ctx, channel: discord.VoiceChannel):
         return await ctx.voice_client.move_to(channel)
     
     await channel.connect()
-    await ctx.send(f"``` {bot.user} has joined '{channel}' ```")
     await ctx.send("``` voice chat on ```")
     messages = charSet()
 
     while True:
         discon = 0
         await ctx.send("> initializing")
-        waitHey(keyword=keyword)
+        check = waitListen(keyword=keyword)
+
+        if check == 'disconnect' or check == 'disconnect.' or check == 'ยกเลิกการทำงาน' or check == 'ยกเลิกการทำงาน.':
+            print("\nleaving:")
+            await ctx.channel.send("> leaving..")
+            await ctx.send("``` voice chat off ```")
+            await ctx.voice_client.disconnect(force=True)
+            raise SystemExit
+        
         suffix = getSuffix(save_foldername)
         start_time = time.time()
+        
         while True:
             if discon:
                 break
@@ -182,10 +205,12 @@ async def join(ctx, channel: discord.VoiceChannel):
             await ctx.channel.send("> listening")
             print("\nlistening:")
             audio = listenFor()
+
             try:
                 r = sr.Recognizer()
-                query = r.recognize_google(audio, language="en-US")
+                query = r.recognize_google(audio, language=f"{speechLang}")
                 messages.append({"role" : "user", "content" : query})
+                print("true")
             except :
                 if time.time() - start_time > timescoped:
                     await ctx.channel.send("> ~listening")
@@ -193,12 +218,9 @@ async def join(ctx, channel: discord.VoiceChannel):
                     break
                 continue
             
-            if "quit" in query.lower() or "quit." in query.lower():
+            if "stop" in query.lower() or "stop." in query.lower() or "ยกเลิกการฟัง" in query.lower() or "ยกเลิกการฟัง." in query.lower():
                 messages.append({"role" : "system", "content" : "yes"})
                 memorize(suffix=suffix, save_foldername=save_foldername, messages=messages)
-                await ctx.channel.send("> leaving..")
-                await ctx.send("``` voice chat off ```")
-                await ctx.voice_client.disconnect(force=True)
                 discon = 1
                 continue
             
@@ -206,17 +228,18 @@ async def join(ctx, channel: discord.VoiceChannel):
                 await ctx.channel.send("> generating")
                 print("\ngenerating:")
                 say = textGen(messages)
-                source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(voice(trans(say))))
+                source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(f'https://tipme.in.th/api/tts/?text={trans(say)}&format=opus'))
                 ctx.voice_client.play(source)
                 await ctx.channel.send(say)
+
                 while ctx.voice_client.is_playing():
                     await asyncio.sleep(1)
+                    
                 start_time = time.time()
             except Exception as e:
                 print(f"{e}")
                 print("Token limit exceeded, clearing messsages list and restarting")
                 suffix = getSuffix(save_foldername)
-
 
         if discon:
             continue

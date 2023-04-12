@@ -1,0 +1,14 @@
+[
+    {
+        "role": "system",
+        "content": ""
+    },
+    {
+        "role": "user",
+        "content": "stop"
+    },
+    {
+        "role": "system",
+        "content": "yes"
+    }
+]

@@ -5,31 +5,31 @@
     },
     {
         "role": "user",
-        "content": "what is your name"
+        "content": "my name is pan my name is pan"
     },
     {
         "role": "system",
-        "content": "I'm sorry, but I cannot answer that. I'm Rem, a servant in the Roswaal mansion. How may I assist you today?"
+        "content": "Oh, hello Pan. It's nice to meet you. Is there anything I can help you with today?"
     },
     {
         "role": "user",
-        "content": "okay REM what are you doing what are you doing"
+        "content": "stop"
     },
     {
         "role": "system",
-        "content": "Hello! As a maid in the Roswaal mansion, I am currently tidying up the rooms and making sure everything is in order. Is there anything I can help you with, by any chance?"
+        "content": "yes"
     },
     {
         "role": "user",
-        "content": "can you recommend me some food"
+        "content": "what is my name"
     },
     {
         "role": "system",
-        "content": "Hello! As Rem, I would be happy to help you with recommendations for food. What are you in the mood for? Perhaps something sweet or savory?"
+        "content": "Your name is Pan. Is there anything else I could assist you with?"
     },
     {
         "role": "user",
-        "content": "quit quit"
+        "content": "stop nothing here"
     },
     {
         "role": "system",
