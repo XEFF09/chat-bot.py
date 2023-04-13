@@ -2,6 +2,7 @@ import discord
 from discord import Intents
 from discord.ext import commands as cmds
 from dotenv import load_dotenv
+from elevenlabslib import *
 import speech_recognition as sr
 import requests
 import pyttsx3
@@ -11,33 +12,56 @@ import json
 import os
 import time
 
+load_dotenv()
+
 # settings
 
 character = 'Rem'
 keyword = 'listen'
 timescoped = 5
-path = 'history'
-speechLang = 'en-US' # th-TH
-
-if path != 'prompts':
-    memIdx = int(input(f'enter memIdx for {character} (0-inf): '))
+path = 'history' # prompts: new, history: recall
+speech_lang = 'en-US' # 'en-US', 'th-TH'
+reply_lang = 'en' # 'en', 'th'
 
 # variables
 
 save_foldername = f'history/{character}'
 
+if reply_lang == 'en':
+    EL = str(input('use elevenlabs? (y/n): '))
+    EL = True if EL == 'y' or EL == 'Y' else False
+    if EL:
+        eleven_name = str(input('enter eleven name: '))
+        eleven_key = os.getenv('ELEVEN_KEY')
+        user = ElevenLabsUser(eleven_key)
+        eleven_voice = user.get_voices_by_name(eleven_name)[0]
+
+if path == 'history':
+    try:
+        count = 0
+        filename = os.path.join(save_foldername, f'conversation_{count}.txt')
+        while os.path.exists(filename):
+            count += 1
+            filename = os.path.join(save_foldername, f'conversation_{count}.txt')
+        if count == 0:
+            raise Exception
+        memIdx = int(input(f'enter memIdx for {character} (0-{count-1}): '))
+    except:
+        print('\nno history found (paht->prompts)\n')
+        path = 'prompts'
+
 engine = pyttsx3.init('sapi5')
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[0].id)
 
-load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 guld_ids = (os.getenv('GUILD_IDS')).split(', ')
 ids = [int(x) for x in guld_ids]
-key = os.getenv('OPENAI_KEY')
+
+openai_key = os.getenv('OPENAI_KEY')
 intents = Intents().all()
 bot = cmds.Bot(command_prefix='>>', intents=intents)
-openai.api_key = key
+openai.api_key = openai_key
 
 # defualt functions
 
@@ -59,6 +83,18 @@ def charSet():
 
     return messages
 
+def getSuffix(save_foldername:str, messages=charSet()):
+    os.makedirs(save_foldername, exist_ok=True)
+    base_filename = 'conversation'
+    suffix = 0
+    filename = os.path.join(save_foldername, f'{base_filename}_{suffix}.txt')
+    while os.path.exists(filename):
+        suffix += 1
+        filename = os.path.join(save_foldername, f'{base_filename}_{suffix}.txt')
+    with open(filename, 'w', encoding = 'utf-8') as file:
+        json.dump(messages, file, indent=4, ensure_ascii=False)
+    return suffix
+
 def trans(say):
     url = "https://translated-mymemory---translation-memory.p.rapidapi.com/get"
     querystring = {"langpair":"en|th","q":say,"mt":"1","onlyprivate":"0","de":"a@b.c"}
@@ -70,7 +106,7 @@ def trans(say):
     data = json.loads(response.text).get('responseData').get('translatedText')
     return data       
 
-def voice(data):
+def voiceGen(data): # wip
     url = "https://freetts.com/api/TTS/SynthesizeText"
     payload = json.dumps({
     "text": data,
@@ -113,7 +149,7 @@ def textGen(messages=charSet()):
     })
     headers = {
     'Content-Type': 'application/json',
-    'Authorization': f'Bearer {key}'
+    'Authorization': f'Bearer {openai_key}'
     }
     response = requests.request("POST", url, headers=headers, data=payload)
     data = json.loads(response.text).get('choices')[0].get('message').get('content')
@@ -136,7 +172,7 @@ def waitListen(keyword=keyword):
             r.adjust_for_ambient_noise(source, duration=0.5)
             audio = r.listen(source)
             try:
-                query = r.recognize_google(audio, language=speechLang)
+                query = r.recognize_google(audio, language=speech_lang)
             except:
                 continue
             if f"{keyword}" in query.lower():
@@ -155,18 +191,6 @@ def listenFor(timeout:int=30):
         audio = r.listen(source, timeout=timeout)
 
     return audio
-
-def getSuffix(save_foldername:str, messages=charSet()):
-    os.makedirs(save_foldername, exist_ok=True)
-    base_filename = 'conversation'
-    suffix = 0
-    filename = os.path.join(save_foldername, f'{base_filename}_{suffix}.txt')
-    while os.path.exists(filename):
-        suffix += 1
-        filename = os.path.join(save_foldername, f'{base_filename}_{suffix}.txt')
-    with open(filename, 'w', encoding = 'utf-8') as file:
-        json.dump(messages, file, indent=4, ensure_ascii=False)
-    return suffix
 
 # async functions
 
@@ -208,7 +232,7 @@ async def join(ctx, channel: discord.VoiceChannel):
 
             try:
                 r = sr.Recognizer()
-                query = r.recognize_google(audio, language=f"{speechLang}")
+                query = r.recognize_google(audio, language=f"{speech_lang}")
                 messages.append({"role" : "user", "content" : query})
                 print("true")
             except :
@@ -228,9 +252,19 @@ async def join(ctx, channel: discord.VoiceChannel):
                 await ctx.channel.send("> generating")
                 print("\ngenerating:")
                 say = textGen(messages)
-                source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(f'https://tipme.in.th/api/tts/?text={trans(say)}&format=opus'))
-                ctx.voice_client.play(source)
                 await ctx.channel.send(say)
+
+                if reply_lang == 'th':
+                    audio_stream = f'https://tipme.in.th/api/tts/?text={trans(say)}&format=opus'
+                elif reply_lang == 'en':
+                    if EL:
+                        audio_stream = eleven_voice.generate_and_stream_audio(say)
+                    else:
+                        audio_stream = f"https://api.streamelements.com/kappa/v2/speech?voice=Brian&text={say}"
+
+                source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(audio_stream))
+
+                ctx.voice_client.play(source)
 
                 while ctx.voice_client.is_playing():
                     await asyncio.sleep(1)
@@ -238,8 +272,8 @@ async def join(ctx, channel: discord.VoiceChannel):
                 start_time = time.time()
             except Exception as e:
                 print(f"{e}")
-                print("Token limit exceeded, clearing messsages list and restarting")
-                suffix = getSuffix(save_foldername)
+                print("Token limit exceededg")
+                # suffix = getSuffix(save_foldername)
 
         if discon:
             continue
