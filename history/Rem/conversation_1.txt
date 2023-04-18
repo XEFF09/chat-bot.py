@@ -26,5 +26,13 @@
     {
         "role": "system",
         "content": "yes"
+    },
+    {
+        "role": "user",
+        "content": "stop"
+    },
+    {
+        "role": "system",
+        "content": "yes"
     }
 ]

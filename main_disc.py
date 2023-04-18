@@ -19,9 +19,9 @@ load_dotenv()
 character = 'Rem'
 keyword = 'listen'
 timescoped = 5
-path = 'history' # prompts: new, history: recall
+path = 'prompts' # prompts: new, history: recall
 speech_lang = 'en-US' # 'en-US', 'th-TH'
-reply_lang = 'en' # 'en', 'th'
+reply_lang = 'th' # 'en', 'th'
 
 # variables
 
@@ -173,16 +173,22 @@ def waitListen(keyword=keyword):
             audio = r.listen(source)
             try:
                 query = r.recognize_google(audio, language=speech_lang)
-            except:
+
+            except Exception:
+                print('\nerror:')
                 continue
             if f"{keyword}" in query.lower():
                 print("true")
                 break
-            if "disconnect" in query.lower():
-                return 'disconnect'
+            if ("disconnect" in query.lower()  or 
+                'disconnect.' in query.lower() or 
+                'ยกเลิกการทำงาน' in query.lower() or 
+                'ยกเลิกการทำงาน.' in query.lower()
+                ):
+                return 0
             else:
-                continue
-            
+                return 1
+                      
 def listenFor(timeout:int=30):
     r = sr.Recognizer()
     mic = sr.Microphone()
@@ -206,13 +212,20 @@ async def join(ctx, channel: discord.VoiceChannel):
     await channel.connect()
     await ctx.send("``` voice chat on ```")
     messages = charSet()
-
+    
+    perm = 1
     while True:
         discon = 0
-        await ctx.send("> initializing")
+
+        if perm:
+            perm = 0
+            await ctx.send("> initializing")
         check = waitListen(keyword=keyword)
 
-        if check == 'disconnect' or check == 'disconnect.' or check == 'ยกเลิกการทำงาน' or check == 'ยกเลิกการทำงาน.':
+        if check:
+            continue
+        
+        if (not check):
             print("\nleaving:")
             await ctx.channel.send("> leaving..")
             await ctx.send("``` voice chat off ```")
@@ -235,7 +248,7 @@ async def join(ctx, channel: discord.VoiceChannel):
                 query = r.recognize_google(audio, language=f"{speech_lang}")
                 messages.append({"role" : "user", "content" : query})
                 print("true")
-            except :
+            except:
                 if time.time() - start_time > timescoped:
                     await ctx.channel.send("> ~listening")
                     print("\n~listening:")
@@ -260,10 +273,9 @@ async def join(ctx, channel: discord.VoiceChannel):
                     if EL:
                         audio_stream = eleven_voice.generate_and_stream_audio(say)
                     else:
-                        audio_stream = f"https://api.streamelements.com/kappa/v2/speech?voice=Brian&text={say}"
+                        audio_stream = f'https://api.streamelements.com/kappa/v2/speech?voice=Brian&text={say}'
 
                 source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(audio_stream))
-
                 ctx.voice_client.play(source)
 
                 while ctx.voice_client.is_playing():
