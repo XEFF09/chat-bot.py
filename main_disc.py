@@ -179,7 +179,7 @@ def waitListen(keyword=keyword):
                 continue
             if f"{keyword}" in query.lower():
                 print("true")
-                break
+                return 'true'
             if ("disconnect" in query.lower()  or 
                 'disconnect.' in query.lower() or 
                 'ยกเลิกการทำงาน' in query.lower() or 
@@ -222,15 +222,17 @@ async def join(ctx, channel: discord.VoiceChannel):
             await ctx.send("> initializing")
         check = waitListen(keyword=keyword)
 
-        if check:
-            continue
-        
-        if (not check):
-            print("\nleaving:")
-            await ctx.channel.send("> leaving..")
-            await ctx.send("``` voice chat off ```")
-            await ctx.voice_client.disconnect(force=True)
-            raise SystemExit
+        if check != 'true':
+
+            if check:
+                continue
+            
+            if (not check):
+                print("\nleaving:")
+                await ctx.channel.send("> leaving..")
+                await ctx.send("``` voice chat off ```")
+                await ctx.voice_client.disconnect(force=True)
+                raise SystemExit
         
         suffix = getSuffix(save_foldername)
         start_time = time.time()
