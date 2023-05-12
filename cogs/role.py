@@ -8,7 +8,7 @@ load_dotenv()
 guld_ids = (os.getenv('GUILD_IDS')).split(', ')
 ids = [int(x) for x in guld_ids]
 
-place = 1106522326499078185
+place = 1106533559591768146
 
 class role(cmds.Cog):
     def __init__(self, bot):
@@ -23,7 +23,7 @@ class role(cmds.Cog):
 
             if role is not None:
                 member = discord.utils.get(guld_id.members, id=payload.user_id)
-
+                
                 if member is not None:
                     await member.add_roles(role)
                     print(f"Added {role.name} to {member.name}")
@@ -39,10 +39,10 @@ class role(cmds.Cog):
         if message_id == place:
             guld_id = self.bot.get_guild(payload.guild_id)
             role = discord.utils.get(guld_id.roles, name=payload.emoji.name)
-
+             
             if role is not None:
                 member = discord.utils.get(guld_id.members, id=payload.user_id)
-
+    
                 if member is not None:
                     await member.remove_roles(role)
                     print(f"Removed {role.name} to {member.name}")
