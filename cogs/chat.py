@@ -18,7 +18,7 @@ load_dotenv()
 character = 'Rem'
 keyword = 'listen'
 timescoped = 5
-path = 'prompts' # prompts: new, history: recall
+path = 'history' # prompts: new, history: recall
 speech_lang = 'en-US' # 'en-US', 'th-TH'
 reply_lang = 'th' # 'en', 'th'
 
@@ -149,7 +149,7 @@ def textGen(messages=charSet()):
     }
     response = requests.request("POST", url, headers=headers, data=payload)
     data = json.loads(response.text).get('choices')[0].get('message').get('content')
-    messages.append({"role": "system", "content": f"{data}"})
+    messages.append({"role": "assistant", "content": f"{data}"})
     return data
 
 def memorize(suffix, save_foldername, messages=charSet()):
@@ -254,7 +254,7 @@ class chat(cmds.Cog):
                     continue
                 
                 if "stop" in query.lower() or "stop." in query.lower() or "ยกเลิกการฟัง" in query.lower() or "ยกเลิกการฟัง." in query.lower():
-                    messages.append({"role" : "system", "content" : "yes"})
+                    messages.append({"role" : "assistant", "content" : "yes"})
                     memorize(suffix=suffix, save_foldername=save_foldername, messages=messages)
                     discon = 1
                     continue
