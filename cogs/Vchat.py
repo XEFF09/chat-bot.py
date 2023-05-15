@@ -18,7 +18,7 @@ load_dotenv()
 character = 'Rem'
 keyword = 'listen'
 timescoped = 5
-path = 'history' # prompts: new, history: recall
+path = 'prompts' # prompts: new, history: recall
 speech_lang = 'en-US' # 'en-US', 'th-TH'
 reply_lang = 'th' # 'en', 'th'
 
@@ -196,12 +196,12 @@ def listenFor(timeout:int=30):
 
 # async functions
 
-class chat(cmds.Cog):
+class Vchat(cmds.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @cmds.hybrid_command(guild_ids=ids)
-    async def join(self, ctx, channel: discord.VoiceChannel):
+    async def vchat(self, ctx, channel: discord.VoiceChannel):
         if ctx.voice_client is not None:
             return await ctx.voice_client.move_to(channel)
         
@@ -228,7 +228,7 @@ class chat(cmds.Cog):
                     await ctx.channel.send("> leaving..")
                     await ctx.send("``` voice chat off ```")
                     await ctx.voice_client.disconnect(force=True)
-                    raise SystemExit
+                    break
             
             suffix = getSuffix(save_foldername)
             start_time = time.time()
@@ -289,4 +289,4 @@ class chat(cmds.Cog):
                 continue
 
 async def setup(bot):
-    await bot.add_cog(chat(bot))
+    await bot.add_cog(Vchat(bot))

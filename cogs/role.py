@@ -8,7 +8,7 @@ load_dotenv()
 guld_ids = (os.getenv('GUILD_IDS')).split(', ')
 ids = [int(x) for x in guld_ids]
 
-class role(cmds.Cog):
+class Role(cmds.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.place = None
@@ -63,4 +63,4 @@ class role(cmds.Cog):
 
 
 async def setup(bot):
-    await bot.add_cog(role(bot))
+    await bot.add_cog(Role(bot))
