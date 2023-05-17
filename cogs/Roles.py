@@ -19,10 +19,10 @@ class Roles(cmds.Cog):
 
     @cmds.hybrid_command(guld_ids=ids, description="make a selector section")
     async def roles(self, ctx):
+        guild = ctx.guild
         guild_id = ctx.guild.id
-        this_guild = self.bot.get_guild(guild_id)
-        role_names = [role.name for role in this_guild.roles]
-        emoji_names = [emoji.name for emoji in this_guild.emojis]
+        role_names = [role.name for role in guild.roles]
+        emoji_names = [emoji.name for emoji in guild.emojis]
         common_names = list(set(role_names) & set(emoji_names))
 
         self.ls[guild_id] = common_names
@@ -76,9 +76,8 @@ class Roles(cmds.Cog):
     async def manage_role(self, ctx: cmds.Context, name_txt: str, *, emoji_url = None, spec: Optional[Literal['add', 'rem']] = 'add'):
         guild = ctx.guild
         guild_id = ctx.guild.id
-        this_guild = self.bot.get_guild(guild_id)
-        emoji_names = [emoji.name for emoji in this_guild.emojis]
-        role_names = [role.name for role in this_guild.roles]
+        emoji_names = [emoji.name for emoji in guild.emojis]
+        role_names = [role.name for role in guild.roles]
         pfp = ctx.author.display_avatar
 
         if spec == 'add':

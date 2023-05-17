@@ -171,7 +171,7 @@ def waitListen(keyword=keyword):
                 query = r.recognize_google(audio, language=speech_lang)
 
             except Exception:
-                print('\nerror:')
+                print('\waiting:')
                 continue
             if f"{keyword}" in query.lower():
                 print("true")

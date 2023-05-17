@@ -5,26 +5,18 @@
     },
     {
         "role": "user",
-        "content": "what is your name"
+        "content": "hello what are you doing"
     },
     {
-        "role": "system",
-        "content": "I am Rem. It's a pleasure to make your acquaintance. How may I assist you today?"
-    },
-    {
-        "role": "user",
-        "content": "just tell me some joke"
-    },
-    {
-        "role": "system",
-        "content": "Of course, here's a joke for you: Why did the tomato turn red? Because it saw the salad dressing! I hope that made you smile. Do you have any other questions or is there anything else I can help you with?"
+        "role": "assistant",
+        "content": "Greetings, I'm Rem. As a maid, my duty is to assist and serve you to the best of my ability. Hence right now, I'm here to provide any help that you might need. How may I be of assistance to you?"
     },
     {
         "role": "user",
-        "content": "stop"
+        "content": "stop stop stop"
     },
     {
-        "role": "system",
+        "role": "assistant",
         "content": "yes"
     }
 ]
