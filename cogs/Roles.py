@@ -37,45 +37,36 @@ class Roles(cmds.Cog):
         else:
             await ctx.reply("> no roles found")
         
-    @cmds.Cog.listener()
-    async def on_raw_reaction_add(self, payload):
+    async def handle_reaction(self, payload, add_role):
         if self.place is not None:
             message_id = payload.message_id
             if message_id == self.place:
-                guld_id = self.bot.get_guild(payload.guild_id)
-                role = discord.utils.get(guld_id.roles, name=payload.emoji.name)
+                guild = self.bot.get_guild(payload.guild_id)
+                role = discord.utils.get(guild.roles, name=payload.emoji.name)
 
                 if role is not None:
-                    member = discord.utils.get(guld_id.members, id=payload.user_id)
-                    
+                    member = guild.get_member(payload.user_id)
+
                     if member is not None:
-                        await member.add_roles(role)
-                        print(f"added {role.name} to {member.name}")
+                        if add_role:
+                            await member.add_roles(role)
+                            print(f"added {role.name} to {member.name}")
+                        else:
+                            await member.remove_roles(role)
+                            print(f"removed {role.name} from {member.name}")
                     else:
                         print("member not found")
 
                 else:
                     print("role not found")
+
+    @cmds.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        await self.handle_reaction(payload, add_role=True)
 
     @cmds.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
-        if self.place is not None:
-            message_id = payload.message_id
-            if message_id == self.place:
-                guld_id = self.bot.get_guild(payload.guild_id)
-                role = discord.utils.get(guld_id.roles, name=payload.emoji.name)
-                
-                if role is not None:
-                    member = discord.utils.get(guld_id.members, id=payload.user_id)
-        
-                    if member is not None:
-                        await member.remove_roles(role)
-                        print(f"removed {role.name} to {member.name}")
-                    else:
-                        print("member not found")
-
-                else:
-                    print("role not found")
+        await self.handle_reaction(payload, add_role=False)
                 
     def cog_unload(self):
         self.bot.loop.create_task(self.session.close())
