@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands as cmds
 from dotenv import load_dotenv
 import os
-from discord import app_commands
 
 load_dotenv()
 
@@ -13,7 +12,7 @@ class Status(cmds.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @cmds.hybrid_command(guld_ids=ids)
+    @cmds.hybrid_command(guld_ids=ids, description="shows the status of a member")
     async def status(self, ctx: cmds.Context, member: discord.Member) -> None:
         mem = ctx.guild.get_member(member.id)
 

@@ -200,7 +200,8 @@ class Vchat(cmds.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @cmds.hybrid_command(guild_ids=ids)
+    @cmds.is_owner()
+    @cmds.hybrid_command(guild_ids=ids, description="voice chat with ai", usage="vchat <channel>")
     async def vchat(self, ctx, channel: discord.VoiceChannel):
         if ctx.voice_client is not None:
             return await ctx.voice_client.move_to(channel)
