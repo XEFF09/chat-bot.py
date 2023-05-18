@@ -103,7 +103,7 @@ class Roles(cmds.Cog):
 
                 embed = discord.Embed(
                     title=f"ROLE: {role.name} added", 
-                    description=f"> use /role to create field",
+                    description=f"> use /roles to create field",
                     color=discord.Color.random()
                 )
 
