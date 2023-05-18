@@ -1,0 +1,12 @@
+services:
+    bot:
+        restart: on-failure
+        build:
+            context: .
+            dockerfile: Dockerfile
+        environment:
+            - DISCORD_TOKEN
+            - GUILD_IDS
+            - OPENAI_KEY
+            - ELEVEN_KEY
+        
