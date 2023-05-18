@@ -7,7 +7,7 @@ RUN apt update
 
 RUN apt-get update && apt-get install -y ffmpeg
 
-RUN apt install build-essentials -y
+RUN apt-get install build-essential -y
 RUN apt-get install manpages-dev -y
 RUN apt-get install libportaudio2 libportaudiocpp0 portaudio19-dev libsndfile1-dev -y
 
