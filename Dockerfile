@@ -14,6 +14,9 @@ COPY . .
 
 RUN apt-get update && apt-get install -y ffmpeg
 
+RUN apt install build-essentials -y
+RUN apt-get install manpages-dev -y
+
 RUN python3 -m pip install --upgrade pip
 
 CMD [ "python3", "-u", "main.py" ]
