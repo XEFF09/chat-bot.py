@@ -53,9 +53,6 @@ engine = pyttsx3.init('sapi5')
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[0].id)
 
-guld_ids = (os.getenv('GUILD_IDS')).split(', ')
-ids = [int(x) for x in guld_ids]
-
 openai_key = os.getenv('OPENAI_KEY')
 openai.api_key = openai_key
 
@@ -201,7 +198,7 @@ class Vchat(cmds.Cog):
         self.bot = bot
 
     @cmds.is_owner()
-    @cmds.hybrid_command(guild_ids=ids, description="voice chat with ai", usage="vchat <channel>")
+    @cmds.hybrid_command(description="voice chat with ai", usage="vchat <channel>")
     async def vchat(self, ctx, channel: discord.VoiceChannel):
         if ctx.voice_client is not None:
             return await ctx.voice_client.move_to(channel)

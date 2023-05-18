@@ -6,14 +6,11 @@ import os
 
 load_dotenv()
 
-guld_ids = (os.getenv('GUILD_IDS')).split(', ')
-ids = [int(x) for x in guld_ids]
-
 class Mention(cmds.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @cmds.hybrid_command(guld_ids=ids, description="simply sends the text to a member")
+    @cmds.hybrid_command(description="simply sends the text to a member")
     async def mention(self, ctx, text: str, to: discord.Member = None):
         if to is None:
             to = rand.choice(ctx.guild.members)

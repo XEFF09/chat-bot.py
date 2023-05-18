@@ -5,14 +5,11 @@ import os
 
 load_dotenv()
 
-guld_ids = (os.getenv('GUILD_IDS')).split(', ')
-ids = [int(x) for x in guld_ids]
-
 class Status(cmds.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @cmds.hybrid_command(guld_ids=ids, description="shows the status of a member")
+    @cmds.hybrid_command(description="shows the status of a member")
     async def status(self, ctx: cmds.Context, member: discord.Member) -> None:
         mem = ctx.guild.get_member(member.id)
 
