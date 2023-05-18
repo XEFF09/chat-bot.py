@@ -13,7 +13,7 @@ ids = [int(x) for x in guld_ids]
 class Roles(cmds.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.place = None
+        self.place = {}
         self.session = aiohttp.ClientSession()
         self.ls = {}
 
@@ -29,7 +29,7 @@ class Roles(cmds.Cog):
 
         if self.ls[guild_id]:
             message = await ctx.send("select ur role here :)")
-            self.place = message.id
+            self.place[guild_id] = message.id
             for i in self.ls[guild_id]:
                 emoji = discord.utils.get(self.bot.emojis, name=i)
                 await message.add_reaction(emoji)
@@ -38,9 +38,10 @@ class Roles(cmds.Cog):
             await ctx.reply("> no roles found")
         
     async def handle_reaction(self, payload, add_role):
-        if self.place is not None:
+        guild_id = payload.guild_id
+        if self.place[guild_id] is not None:
             message_id = payload.message_id
-            if message_id == self.place:
+            if message_id == self.place[guild_id]:
                 guild = self.bot.get_guild(payload.guild_id)
                 role = discord.utils.get(guild.roles, name=payload.emoji.name)
 
