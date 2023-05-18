@@ -7,9 +7,6 @@ import os
 
 load_dotenv()
 
-guld_ids = (os.getenv('GUILD_IDS')).split(', ')
-ids = [int(x) for x in guld_ids]
-
 class Roles(cmds.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -17,7 +14,7 @@ class Roles(cmds.Cog):
         self.session = aiohttp.ClientSession()
         self.ls = {}
 
-    @cmds.hybrid_command(guld_ids=ids, description="make a selector section")
+    @cmds.hybrid_command(description="make a selector section")
     async def roles(self, ctx):
         guild = ctx.guild
         guild_id = ctx.guild.id
@@ -72,7 +69,7 @@ class Roles(cmds.Cog):
     def cog_unload(self):
         self.bot.loop.create_task(self.session.close())
 
-    @cmds.hybrid_command(guld_ids=ids, description="add/remove a role")
+    @cmds.hybrid_command(description="add/remove a role")
     @cmds.has_permissions(manage_roles=True, manage_emojis=True)
     async def manage_role(self, ctx: cmds.Context, name_txt: str, *, emoji_url = None, spec: Optional[Literal['add', 'rem']] = 'add'):
         guild = ctx.guild
