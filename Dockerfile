@@ -14,4 +14,6 @@ COPY . .
 
 RUN apt-get update && apt-get install -y ffmpeg
 
+RUN python3 -m pip install --upgrade pip
+
 CMD [ "python3", "-u", "main.py" ]
