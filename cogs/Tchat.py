@@ -135,7 +135,7 @@ class Tchat(cmds.Cog):
             await self.payload.send("``` voice chat off ```")
             await self.payload.voice_client.disconnect(force=True)
 
-    @cmds.Cog.listener()
+    @cmds.hybrid_command()
     async def on_message(self, ctx):
         if self.rdy:
             if ctx.author.bot:
@@ -143,7 +143,6 @@ class Tchat(cmds.Cog):
             
             start_time = time.time()
             text = ctx.content
-
 
             await ctx.channel.send("> listening")
             print("\nlistening:")
