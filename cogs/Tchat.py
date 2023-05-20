@@ -123,7 +123,6 @@ class Tchat(cmds.Cog):
         with open(filename, 'w', encoding = 'utf-8') as file:
             json.dump(self.messages, file, indent=4, ensure_ascii=False)
 
-    @cmds.guild_only()
     @cmds.command()
     async def stop(self, ctx):
         if self.vc_playing == False:
@@ -135,7 +134,6 @@ class Tchat(cmds.Cog):
             await self.payload.send("``` voice chat off ```")
             await self.payload.voice_client.disconnect(force=True)
 
-    @cmds.guild_only()
     @cmds.Cog.listener()
     async def on_message(self, ctx):
         if self.rdy:
@@ -182,8 +180,7 @@ class Tchat(cmds.Cog):
                 except Exception as e:
                     print(f"{e}")
                     print("Token limit exceededg")
-
-    @cmds.guild_only()
+    
     @cmds.hybrid_command(description=f'characters: {characters}')
     async def set_tchat(self, ctx, char: str, dialogue: Optional[Literal['new', 'con']] = 'prompts'):
         self.save_foldername = f'history/{char}'
