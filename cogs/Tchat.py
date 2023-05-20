@@ -41,8 +41,9 @@ class Tchat(cmds.Cog):
         self.voice = None
         self.user_id = None
         self.suffix = None
-        self.audio_stream = None
         self.vc_playing = False
+        self.SPAM_COOLDOWN = 6
+        self.last_message_time = None
 
     def getSuffix(self):
         os.makedirs(self.save_foldername, exist_ok=True)
@@ -127,19 +128,36 @@ class Tchat(cmds.Cog):
     @cmds.command()
     async def stop(self, ctx):
         if self.vc_playing == False:
-            self.messages.append({"role" : "assistant", "content" : "yes"})
-            self.memorize()
-            self.rdy = 0
             print("\nleaving:")
             await ctx.channel.send("> leaving..")
             await self.payload.send("``` voice chat off ```")
             await self.payload.voice_client.disconnect(force=True)
+            self.rdy = 0
+            try:
+                self.messages.append({"role" : "assistant", "content" : "yes"})
+                self.memorize()
+            except:
+                print("memorize failed")
+                pass
 
-    @cmds.hybrid_command()
+    @cmds.Cog.listener()
     async def on_message(self, ctx):
-        if self.rdy:
-            if ctx.author.bot:
+        if ctx.author.bot:
                 return
+        
+        if self.rdy:
+
+            if self.last_message_time is not None:
+                time_diff = (ctx.created_at - self.last_message_time).total_seconds()
+
+                if time_diff < self.SPAM_COOLDOWN:
+                    self.vc_playing = False
+                    self.last_message_time = ctx.created_at
+                    return
+                
+            self.last_message_time = ctx.created_at
+            await  self.bot.process_commands(ctx)
+            self.vc_playing = True
             
             start_time = time.time()
             text = ctx.content
@@ -151,35 +169,37 @@ class Tchat(cmds.Cog):
                 channel_id = ctx.channel.id
                 if ctx.channel.id == channel_id:
                     self.messages.append({"role" : "user", "content" : text})
+
+                    try:
+                        await ctx.channel.send("> generating")
+                        print("\ngenerating:")
+                        say = self.textGen()
+                        await ctx.channel.send(say)
+
+                        if self.reply_lang == 'th':
+                            audio_stream = f'https://tipme.in.th/api/tts/?text={self.trans(say)}&format=opus'
+                        elif self.reply_lang == 'en':
+                            audio_stream = f'https://api.streamelements.com/kappa/v2/speech?voice=Brian&text={say}'
+
+                        source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(audio_stream))
+                        self.payload.voice_client.play(source)
+
+                        while self.payload.voice_client.is_playing():
+                            await asyncio.sleep(1)
+                            
+                        start_time = time.time()
+                    except Exception as e:
+                        print(f"{e}")
+                        print("Token limit exceeded")
+
             except:
                 if time.time() - start_time > timescoped:
                     await ctx.channel.send("> ~listening")
                     print("\n~listening:")
 
-            if self.vc_playing == False:
-                try:
-                    self.vc_playing = True
-                    await ctx.channel.send("> generating")
-                    print("\ngenerating:")
-                    say = self.textGen()
-                    await ctx.channel.send(say)
+        self.vc_playing = False
 
-                    if self.reply_lang == 'th':
-                        self.audio_stream = f'https://tipme.in.th/api/tts/?text={self.trans(say)}&format=opus'
-                    elif self.reply_lang == 'en':
-                        self.audio_stream = f'https://api.streamelements.com/kappa/v2/speech?voice=Brian&text={say}'
-
-                    source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.audio_stream))
-                    self.payload.voice_client.play(source)
-
-                    while self.payload.voice_client.is_playing():
-                        await asyncio.sleep(1)
-                        
-                    self.vc_playing = False
-                    start_time = time.time()
-                except Exception as e:
-                    print(f"{e}")
-                    print("Token limit exceededg")
+                
     
     @cmds.hybrid_command(description=f'characters: {characters}')
     async def set_tchat(self, ctx, char: str, dialogue: Optional[Literal['new', 'con']] = 'prompts'):
@@ -217,7 +237,7 @@ class Tchat(cmds.Cog):
         await ctx.send(embed=embed)
         self.char_is_set = True
 
-    @cmds.hybrid_command()
+    @cmds.hybrid_command(description=f'please remind that the command is still WIP')
     async def tchat(self, ctx, index: int = None, reply_lang: Optional[Literal['th', 'en']] = None):
         if self.char_is_set:
             self.user_id = ctx.author.id
@@ -236,7 +256,11 @@ class Tchat(cmds.Cog):
             if self.perm:
                 mount = '.txt'
             else:
-                mount = f'/conversation_{index}.txt'
+                if index != None:
+                    mount = f'/conversation_{index}.txt'
+                else:
+                    embed = discord.Embed(title=f"ERR: index not found", description="> as you've chosen 'con', the index is required", color=discord.Color.red())
+                    return await ctx.send(embed=embed)
 
             with open(f'{self.dialogue}/{self.char}{mount}', "r", encoding='utf-8') as file:
                 mode = file.read()

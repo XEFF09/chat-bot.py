@@ -3,7 +3,6 @@ from discord.ext import commands as cmds
 from typing import Optional, Literal
 from dotenv import load_dotenv
 import aiohttp
-import os
 import config
 
 load_dotenv()
