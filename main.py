@@ -8,7 +8,6 @@ import os
 load_dotenv()
 
 TOKEN = os.getenv('DISCORD_TOKEN')
-OWNER = os.getenv('OWNER')
 e = [239953209970524160, 361059716891148298]
 
 intents = Intents().all()
@@ -30,14 +29,16 @@ async def on_ready():
 @bot.command()
 @cmds.guild_only()
 async def sync(ctx: cmds.Context, spec: Optional[Literal['add', 'rem']] = None) -> None:
-    if ctx.author.id in e:
-        if spec == 'add':
-            synced = await ctx.bot.tree.sync()
-        elif spec == 'rem':
-            ctx.bot.tree.clear_commands(guild=None)
-            await ctx.bot.tree.sync(guild=None)
-            synced = []
+    if ctx.author.id not in e:
+        return
+    
+    if spec == 'add':
+        synced = await ctx.bot.tree.sync()
+    elif spec == 'rem':
+        ctx.bot.tree.clear_commands(guild=None)
+        await ctx.bot.tree.sync(guild=None)
+        synced = []
 
-        await ctx.channel.send(f"total {len(synced)} synced commands")
+    await ctx.channel.send(f"total {len(synced)} synced commands")
 
 asyncio.run(main())

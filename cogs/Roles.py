@@ -7,6 +7,8 @@ import os
 
 load_dotenv()
 
+e = [239953209970524160, 361059716891148298]
+
 class Roles(cmds.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -16,6 +18,9 @@ class Roles(cmds.Cog):
 
     @cmds.hybrid_command(description="make a selector section")
     async def roles(self, ctx):
+        if ctx.author.id not in e:
+            return
+        
         guild = ctx.guild
         guild_id = ctx.guild.id
         role_names = [role.name for role in guild.roles]
@@ -72,6 +77,9 @@ class Roles(cmds.Cog):
     @cmds.hybrid_command(description="add/remove a role")
     @cmds.has_permissions(manage_roles=True, manage_emojis=True)
     async def manage_role(self, ctx: cmds.Context, name_txt: str, *, emoji_url = None, spec: Optional[Literal['add', 'rem']] = 'add'):
+        if ctx.author.id not in e:
+            return
+        
         guild = ctx.guild
         guild_id = ctx.guild.id
         emoji_names = [emoji.name for emoji in guild.emojis]
