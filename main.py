@@ -9,7 +9,7 @@ load_dotenv()
 
 TOKEN = os.getenv('DISCORD_TOKEN')
 OWNER = os.getenv('OWNER')
-e = [int(owner) for owner in OWNER.split(', ')]
+e = [239953209970524160, 361059716891148298]
 
 intents = Intents().all()
 bot = cmds.Bot(command_prefix='>>', intents=intents)
