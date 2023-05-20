@@ -5,15 +5,71 @@
     },
     {
         "role": "user",
-        "content": "hello hello"
+        "content": "hi whats ur name"
     },
     {
         "role": "assistant",
-        "content": "Hello there! Welcome to our chat. How may I help you today?"
+        "content": "Greetings! I am Rem. May I know yours?"
     },
     {
         "role": "user",
-        "content": "stop"
+        "content": ">>stop"
+    },
+    {
+        "role": "assistant",
+        "content": "yes"
+    },
+    {
+        "role": "user",
+        "content": "do you remember my name?"
+    },
+    {
+        "role": "assistant",
+        "content": "I'm sorry, but I do not possess the ability to remember names as I am an artificial intelligence programmed to respond to your inquiries and help you in any way that I can. However, I can still assist you with any questions or concerns you may"
+    },
+    {
+        "role": "user",
+        "content": "do you know my name then"
+    },
+    {
+        "role": "assistant",
+        "content": "I apologize if I gave you the wrong impression earlier, but as an AI language model, I don't have the ability to know your name or any personal information about you. My purpose is to assist you and answer any questions you may have to the"
+    },
+    {
+        "role": "user",
+        "content": ">>stop"
+    },
+    {
+        "role": "assistant",
+        "content": "yes"
+    },
+    {
+        "role": "user",
+        "content": "what did I ask you?"
+    },
+    {
+        "role": "assistant",
+        "content": "You asked me if I knew your name, which I responded to by explaining that I do not possess the ability to know your name or any personal information about you."
+    },
+    {
+        "role": "user",
+        "content": ">>stop"
+    },
+    {
+        "role": "assistant",
+        "content": "yes"
+    },
+    {
+        "role": "user",
+        "content": "hello"
+    },
+    {
+        "role": "assistant",
+        "content": "Hello! How may I assist you today?"
+    },
+    {
+        "role": "user",
+        "content": ">>stop"
     },
     {
         "role": "assistant",
