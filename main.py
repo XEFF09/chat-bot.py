@@ -8,6 +8,8 @@ import os
 load_dotenv()
 
 TOKEN = os.getenv('DISCORD_TOKEN')
+OWNER = os.getenv('OWNER')
+e = [owner for owner in OWNER.split(',')]
 intents = Intents().all()
 bot = cmds.Bot(command_prefix='>>', intents=intents)
 
@@ -36,5 +38,8 @@ async def sync(ctx: cmds.Context, spec: Optional[Literal['add', 'rem']] = None) 
         synced = []
 
     await ctx.channel.send(f"total {len(synced)} synced commands")
+
+def is_owner(ctx):
+    return ctx.author.id in e
 
 asyncio.run(main())
