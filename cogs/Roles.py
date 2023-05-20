@@ -4,10 +4,9 @@ from typing import Optional, Literal
 from dotenv import load_dotenv
 import aiohttp
 import os
+import config
 
 load_dotenv()
-
-e = [239953209970524160, 361059716891148298]
 
 class Roles(cmds.Cog):
     def __init__(self, bot):
@@ -18,7 +17,7 @@ class Roles(cmds.Cog):
 
     @cmds.hybrid_command(description="make a selector section")
     async def roles(self, ctx):
-        if ctx.author.id not in e:
+        if ctx.author.id not in config.OWNER:
             return
         
         guild = ctx.guild
@@ -77,7 +76,7 @@ class Roles(cmds.Cog):
     @cmds.hybrid_command(description="add/remove a role")
     @cmds.has_permissions(manage_roles=True, manage_emojis=True)
     async def manage_role(self, ctx: cmds.Context, name_txt: str, *, emoji_url = None, spec: Optional[Literal['add', 'rem']] = 'add'):
-        if ctx.author.id not in e:
+        if ctx.author.id not in config.OWNER:
             return
         
         guild = ctx.guild

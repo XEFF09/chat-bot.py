@@ -4,11 +4,11 @@ from discord.ext import commands as cmds
 from dotenv import load_dotenv
 import asyncio
 import os
+import config
 
 load_dotenv()
 
 TOKEN = os.getenv('DISCORD_TOKEN')
-e = [239953209970524160, 361059716891148298]
 
 intents = Intents().all()
 bot = cmds.Bot(command_prefix='>>', intents=intents)
@@ -29,7 +29,7 @@ async def on_ready():
 @bot.command()
 @cmds.guild_only()
 async def sync(ctx: cmds.Context, spec: Optional[Literal['add', 'rem']] = None) -> None:
-    if ctx.author.id not in e:
+    if ctx.author.id not in config.OWNER:
         return
     
     if spec == 'add':

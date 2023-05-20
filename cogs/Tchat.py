@@ -8,6 +8,7 @@ import openai
 import json
 import time
 import os
+import config
 
 load_dotenv()
 
@@ -21,7 +22,6 @@ timescoped = 5
 
 openai_key = os.getenv('OPENAI_KEY')
 openai.api_key = openai_key
-e = [239953209970524160, 361059716891148298]
 
 # async functions
 
@@ -184,7 +184,7 @@ class Tchat(cmds.Cog):
     
     @cmds.hybrid_command(description=f'characters: {characters}')
     async def set_tchat(self, ctx, char: str, dialogue: Optional[Literal['new', 'con']] = 'prompts'):
-        if ctx.author.id not in e:
+        if ctx.author.id not in config.OWNER:
             return
         
         self.save_foldername = f'history/{char}'
