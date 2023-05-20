@@ -29,18 +29,15 @@ async def on_ready():
 
 @bot.command()
 @cmds.guild_only()
-@cmds.is_owner()
 async def sync(ctx: cmds.Context, spec: Optional[Literal['add', 'rem']] = None) -> None:
-    if spec == 'add':
-        synced = await ctx.bot.tree.sync()
-    elif spec == 'rem':
-        ctx.bot.tree.clear_commands(guild=None)
-        await ctx.bot.tree.sync(guild=None)
-        synced = []
+    if ctx.author.id in e:
+        if spec == 'add':
+            synced = await ctx.bot.tree.sync()
+        elif spec == 'rem':
+            ctx.bot.tree.clear_commands(guild=None)
+            await ctx.bot.tree.sync(guild=None)
+            synced = []
 
-    await ctx.channel.send(f"total {len(synced)} synced commands")
-
-def is_owner(ctx):
-    return ctx.author.id in e
+        await ctx.channel.send(f"total {len(synced)} synced commands")
 
 asyncio.run(main())
