@@ -15,7 +15,7 @@ class Roles(cmds.Cog):
         self.ls = {}
 
     @cmds.hybrid_command(description="make a selector section")
-    async def roles(self, ctx):
+    async def roles(self, ctx, types: Optional[Literal['yr', 'fav']] = None):
         if ctx.author.id not in config.OWNER:
             return await ctx.reply("> you have no perm to use this command!")
         
@@ -25,11 +25,21 @@ class Roles(cmds.Cog):
         emoji_names = [emoji.name for emoji in guild.emojis]
         common_names = list(set(role_names) & set(emoji_names))
 
-        self.ls[guild_id] = common_names
+        if types == 'yr':
+            for_yr = [i for i in common_names if i.startswith("ku")]
+            self.ls[guild_id] = for_yr
+        elif types == 'fav':
+            for_fav = [i for i in common_names if i.startswith("fav")]
+            self.ls[guild_id] = for_fav
+        else:
+            types = "role"
+            self.ls[guild_id] = common_names
 
         if self.ls[guild_id]:
-            message = await ctx.send("select ur role here :)")
-            self.place[guild_id] = message.id
+            message = await ctx.send(f"select ur {types} here :)")
+            if guild_id not in self.place:
+                self.place[guild_id] = []
+            self.place[guild_id].append(message.id)
             for i in self.ls[guild_id]:
                 emoji = discord.utils.get(self.bot.emojis, name=i)
                 await message.add_reaction(emoji)
@@ -41,7 +51,7 @@ class Roles(cmds.Cog):
         guild_id = payload.guild_id
         if self.place[guild_id] is not None:
             message_id = payload.message_id
-            if message_id == self.place[guild_id]:
+            if message_id in self.place[guild_id]:
                 guild = self.bot.get_guild(payload.guild_id)
                 role = discord.utils.get(guild.roles, name=payload.emoji.name)
 
