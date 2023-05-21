@@ -26,10 +26,10 @@ class Roles(cmds.Cog):
         common_names = list(set(role_names) & set(emoji_names))
 
         if types == 'yr':
-            for_yr = [i for i in common_names if i.startswith("ku")]
+            for_yr = [i for i in common_names if i.startswith("ku_")]
             self.ls[guild_id] = for_yr
         elif types == 'fav':
-            for_fav = [i for i in common_names if i.startswith("fav")]
+            for_fav = [i for i in common_names if i.startswith("fav_")]
             self.ls[guild_id] = for_fav
         else:
             types = "role"
