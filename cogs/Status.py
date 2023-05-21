@@ -16,7 +16,7 @@ class Status(cmds.Cog):
         usr_name = mem.name
         activity = mem.activity
         pfp = mem.display_avatar
-        ison_type = getattr(mem.activity, 'type.name', 'unknown')
+        ison_type = getattr(mem.activity, 'type', 'unknown')
         auth = getattr(
             mem.activity, 
             'artist', 

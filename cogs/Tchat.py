@@ -204,7 +204,7 @@ class Tchat(cmds.Cog):
     @cmds.hybrid_command(description=f'characters: {characters}')
     async def set_tchat(self, ctx, char: str, dialogue: Optional[Literal['new', 'con']] = 'prompts'):
         if ctx.author.id not in config.OWNER:
-            return
+            return await ctx.reply("> you have no perm to use this command!")
         
         self.save_foldername = f'history/{char}'
         self.char = char

@@ -17,7 +17,7 @@ class Roles(cmds.Cog):
     @cmds.hybrid_command(description="make a selector section")
     async def roles(self, ctx):
         if ctx.author.id not in config.OWNER:
-            return
+            return await ctx.reply("> you have no perm to use this command!")
         
         guild = ctx.guild
         guild_id = ctx.guild.id
@@ -76,7 +76,7 @@ class Roles(cmds.Cog):
     @cmds.has_permissions(manage_roles=True, manage_emojis=True)
     async def manage_role(self, ctx: cmds.Context, name_txt: str, *, emoji_url = None, spec: Optional[Literal['add', 'rem']] = 'add'):
         if ctx.author.id not in config.OWNER:
-            return
+            return await ctx.reply("> you have no perm to use this command!")
         
         guild = ctx.guild
         guild_id = ctx.guild.id
