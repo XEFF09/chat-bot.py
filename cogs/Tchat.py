@@ -128,11 +128,11 @@ class Tchat(cmds.Cog):
     @cmds.command()
     async def stop(self, ctx):
         if self.vc_playing == False:
+            self.rdy = 0
             print("\nleaving:")
             await ctx.channel.send("> leaving..")
             await self.payload.send("``` voice chat off ```")
             await self.payload.voice_client.disconnect(force=True)
-            self.rdy = 0
             try:
                 self.messages.append({"role" : "assistant", "content" : "yes"})
                 self.memorize()
