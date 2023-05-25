@@ -279,7 +279,7 @@ class Tchat(cmds.Cog):
 
     @cmds.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
-        if self.user_id is not None:
+        if self.user_id is not None and self.rdy:
             #bot itself changed
             if member == self.bot.user:
                 if not after.channel:
