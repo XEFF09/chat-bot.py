@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands as cmds
 from dotenv import load_dotenv
-from typing import Optional, List, Literal
+from typing import Optional, Literal
 import requests
 import asyncio
 import openai
@@ -117,7 +117,7 @@ class Tchat(cmds.Cog):
         data = json.loads(response.text).get('choices')[0].get('message').get('content')
         self.messages.append({"role": "assistant", "content": f"{data}"})
         return data
-
+    
     def memorize(self):
         os.makedirs(self.save_foldername, exist_ok=True)
         base_filename = 'conversation'
@@ -199,8 +199,6 @@ class Tchat(cmds.Cog):
 
         self.vc_playing = False
 
-                
-    
     @cmds.hybrid_command(description=f'characters: {characters}')
     async def set_tchat(self, ctx, char: str, dialogue: Optional[Literal['new', 'con']] = 'prompts'):
         if ctx.author.id not in config.OWNER:
@@ -278,7 +276,7 @@ class Tchat(cmds.Cog):
             await ctx.send(embed=embed)
 
     @cmds.Cog.listener()
-    async def on_voice_state_update(self, member, before, after):
+    async def on_voice_state_update(self, member, before, after, ctx):
         if self.user_id is not None and self.rdy:
             #bot itself changed
             if member == self.bot.user:
@@ -294,5 +292,9 @@ class Tchat(cmds.Cog):
                         self.voice = await voice_channel.connect()
                         print(f"Joined {after.channel}")
 
+                elif before.channel.guild.voice_client != after.channel.guild.voice_client:
+                    if self.voice:
+                        await self.voice.disconnect()
+                    
 async def setup(bot):
     await bot.add_cog(Tchat(bot))
