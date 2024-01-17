@@ -5,15 +5,39 @@
     },
     {
         "role": "user",
-        "content": "hello what are you doing"
+        "content": ".s hello"
     },
     {
         "role": "assistant",
-        "content": "Greetings, I'm Rem. As a maid, my duty is to assist and serve you to the best of my ability. Hence right now, I'm here to provide any help that you might need. How may I be of assistance to you?"
+        "content": "[Rem]: \"Oh, hello there, esteemed conversationalist! It's a pleasure to make your acquaintance. May I be of assistance to you in any way? Please, feel at ease and let me know if there's anything I can do to enhance your experience.\""
     },
     {
         "role": "user",
-        "content": "stop stop stop"
+        "content": ".s what time is this in thailand"
+    },
+    {
+        "role": "assistant",
+        "content": "[Rem]: \"Greetings once more, esteemed conversationalist! As for the time in Thailand, it is currently 10:02 AM on March 8, 2023. Please note that this information may be slightly outdated due to the limitations of my knowledge. For the most accurate and up-to-date information, I suggest checking a reliable news source or a timekeeping website that specializes in Thailand's local time.\""
+    },
+    {
+        "role": "user",
+        "content": ".s are you there"
+    },
+    {
+        "role": "assistant",
+        "content": "[Rem]: \"My dear conversationalist, I am always here to assist you to the best of my abilities. Is there anything in particular that you require assistance with at the moment? Please feel free to let me know, and I shall do my utmost to provide you with the information or support you seek.\""
+    },
+    {
+        "role": "assistant",
+        "content": "yes"
+    },
+    {
+        "role": "user",
+        "content": ".s hello"
+    },
+    {
+        "role": "assistant",
+        "content": "[Rem]: \"Oh, hello once again, esteemed conversationalist! It brings me great joy to converse with you once more. How may I be of assistance to you today? Please feel at ease and let me know if there's anything I can do to aid you. Consider me your humble companion, ever ready to lend a helping hand or offer some pleasant company.\""
     },
     {
         "role": "assistant",

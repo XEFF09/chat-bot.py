@@ -22,6 +22,7 @@ timescoped = 5
 
 openai_key = os.getenv('OPENAI_KEY')
 openai.api_key = openai_key
+googleai_key = os.getenv('GOOGLEAI_KEY')
 
 # async functions
 
@@ -103,18 +104,25 @@ class Tchat(cmds.Cog):
         return res
         
     def textGen(self):
-        url = "https://api.openai.com/v1/chat/completions"
-        payload = json.dumps({
-        "model": "gpt-3.5-turbo",
-        "messages": self.messages,
-        "max_tokens": 50
-        })
-        headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {openai_key}'
-        }
-        response = requests.request("POST", url, headers=headers, data=payload)
-        data = json.loads(response.text).get('choices')[0].get('message').get('content')
+        # url = "https://api.openai.com/v1/chat/completions"
+        # payload = json.dumps({
+        #     "model": "gpt-3.5-turbo",
+        #     "messages": self.messages,
+        #     "max_tokens": 50
+        # })
+        # headers = {
+        #     'Content-Type': 'application/json',
+        #     'Authorization': f'Bearer {openai_key}'
+        # }
+        # response = requests.request("POST", url, headers=headers, data=payload)
+        # data = json.loads(response.text).get('choices')[0].get('message').get('content')
+        # self.messages.append({"role": "assistant", "content": f"{data}"})
+        # return data
+
+        url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={googleai_key}'
+        body = {"contents":[{"parts":[{"text":f"{self.messages}"}]}]}
+        response = requests.post(url, json=body)
+        data = json.loads(response.text).get('candidates')[0].get('content').get('parts')[0].get('text')
         self.messages.append({"role": "assistant", "content": f"{data}"})
         return data
     
@@ -145,7 +153,10 @@ class Tchat(cmds.Cog):
         if ctx.author.bot:
                 return
         
-        if self.rdy:
+        if ctx.content.startswith('.e'):
+            await self.stop(ctx)
+        
+        if self.rdy and ctx.content.startswith('.s'):
 
             if self.last_message_time is not None:
                 time_diff = (ctx.created_at - self.last_message_time).total_seconds()
@@ -174,7 +185,8 @@ class Tchat(cmds.Cog):
                         await ctx.channel.send("> generating")
                         print("\ngenerating:")
                         say = self.textGen()
-                        await ctx.channel.send(say)
+                        embed = discord.Embed(title=f"char: {self.char}", color=discord.Color.purple(), description=say)
+                        await ctx.reply(embed=embed)
 
                         if self.reply_lang == 'th':
                             audio_stream = f'https://tipme.in.th/api/tts/?text={self.trans(say)}&format=opus'
