@@ -2,38 +2,30 @@ import discord
 from discord.ext import commands as cmds
 from dotenv import load_dotenv
 from typing import Optional, Literal
-import requests
 import asyncio
-import openai
 import json
 import time
 import os
 import config
 
+from additionals import Textgen, Voicegen, Memorize
+
 load_dotenv()
 
 # settings
-
 directory_path = './prompts'
 characters = [name[:-4] for name in os.listdir(directory_path)]
 timescoped = 5
 
-# variables
-
-openai_key = os.getenv('OPENAI_KEY')
-openai.api_key = openai_key
-googleai_key = os.getenv('GOOGLEAI_KEY')
-
 # async functions
-
 class Tchat(cmds.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.rdy = 0
         self.payload = None
-        self.reply_lang = 'th'
+        self.reply_lang = 'en'
         self.char_is_set = False
-        self.perm = None
+        self.converIsNotExist = None
         self.messages = None
         self.save_foldername = None
         self.char = None
@@ -45,93 +37,24 @@ class Tchat(cmds.Cog):
         self.vc_playing = False
         self.SPAM_COOLDOWN = 6
         self.last_message_time = None
+        self.guild_id = None
 
-    def getSuffix(self):
+    def getSuffix(self, exist: bool):
         os.makedirs(self.save_foldername, exist_ok=True)
         base_filename = 'conversation'
         count = 0
-        filename = os.path.join(self.save_foldername, f'{base_filename}_{count}.txt')
-        while os.path.exists(filename):
-            count += 1
-            filename = os.path.join(self.save_foldername, f'{base_filename}_{count}.txt')
-        with open(filename, 'w', encoding = 'utf-8') as file:
-            json.dump(self.messages, file, indent=4, ensure_ascii=False)
+
+        filename = os.path.join(f'{self.save_foldername}/conversations', f'{base_filename}_{count}.txt')
+
+        if exist == True:
+            while os.path.exists(filename):
+                count += 1
+                filename = os.path.join(f'{self.save_foldername}/conversations', f'{base_filename}_{count}.txt')
+        else:
+            with open(filename, 'w', encoding = 'utf-8') as file:
+                json.dump(self.messages, file, indent=4, ensure_ascii=False)
+
         return count
-
-    def trans(self, say):
-        url = "https://translated-mymemory---translation-memory.p.rapidapi.com/get"
-        querystring = {"langpair":"en|th","q":say,"mt":"1","onlyprivate":"0","de":"a@b.c"}
-        headers = {
-            "X-RapidAPI-Key": "1f678aafcdmshd6d45bc81882a00p18750djsnefc88f21f555",
-            "X-RapidAPI-Host": "translated-mymemory---translation-memory.p.rapidapi.com"
-        }
-        response = requests.request("GET", url, headers=headers, params=querystring)
-        data = json.loads(response.text).get('responseData').get('translatedText')
-        return data       
-
-    def voiceGen(self, data): # wip
-        url = "https://freetts.com/api/TTS/SynthesizeText"
-        payload = json.dumps({
-        "text": data,
-        "type": 0,
-        "ssml": 0,
-        "isLoginUser": 0,
-        "country": "Japanese (Japan)",
-        "voiceType": "Standard",
-        "languageCode": "ja-JP",
-        "voiceName": "ja-JP-Standard-A",
-        "gender": "FEMALE"
-        })
-        headers = {
-        'authority': 'freetts.com',
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en,th-TH;q=0.9,th;q=0.8',
-        'authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjI1NDUyNDIwOTksImlhdCI6MTY4MTI0MjA4OSwiaXNzIjoia2VuIiwiZGF0YSI6eyJ1c2VybmFtZSI6IjE3Mi42OC4yNDIuMjQ4IiwiaWQiOiIxNzIuNjguMjQyLjI0OCIsImxvZ2luX3RpbWUiOjE2ODEyNDIwODl9fQ.btWVQw4ygWKTBjJ9nBhX2txZ6jlipIB49EYDNeEXZmU',
-        'content-type': 'application/json',
-        'cookie': '_ga=GA1.2.1262120938.1679757155; _gid=GA1.2.1415340467.1681226232; _gat=1',
-        'origin': 'https://freetts.com',
-        'referer': 'https://freetts.com/',
-        'sec-ch-ua': '"Chromium";v="112", "Google Chrome";v="112", "Not:A-Brand";v="99"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
-        }
-        response = requests.request("POST", url, headers=headers, data=payload)
-        res = json.loads(response.text)['data']['audiourl']
-        return res
-        
-    def textGen(self):
-        # url = "https://api.openai.com/v1/chat/completions"
-        # payload = json.dumps({
-        #     "model": "gpt-3.5-turbo",
-        #     "messages": self.messages,
-        #     "max_tokens": 50
-        # })
-        # headers = {
-        #     'Content-Type': 'application/json',
-        #     'Authorization': f'Bearer {openai_key}'
-        # }
-        # response = requests.request("POST", url, headers=headers, data=payload)
-        # data = json.loads(response.text).get('choices')[0].get('message').get('content')
-        # self.messages.append({"role": "assistant", "content": f"{data}"})
-        # return data
-
-        url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={googleai_key}'
-        body = {"contents":[{"parts":[{"text":f"{self.messages}"}]}]}
-        response = requests.post(url, json=body)
-        data = json.loads(response.text).get('candidates')[0].get('content').get('parts')[0].get('text')
-        self.messages.append({"role": "assistant", "content": f"{data}"})
-        return data
-    
-    def memorize(self):
-        os.makedirs(self.save_foldername, exist_ok=True)
-        base_filename = 'conversation'
-        filename = os.path.join(self.save_foldername, f'{base_filename}_{self.suffix}.txt')
-        with open(filename, 'w', encoding = 'utf-8') as file:
-            json.dump(self.messages, file, indent=4, ensure_ascii=False)
 
     @cmds.command()
     async def stop(self, ctx):
@@ -141,9 +64,10 @@ class Tchat(cmds.Cog):
             await ctx.channel.send("> leaving..")
             await self.payload.send("``` voice chat off ```")
             await self.payload.voice_client.disconnect(force=True)
+
             try:
                 self.messages.append({"role" : "assistant", "content" : "yes"})
-                self.memorize()
+                Memorize.memorize(messages=self.messages, save_foldername=f'{self.save_foldername}/conversations', suffix=self.suffix)
             except:
                 print("memorize failed")
                 pass
@@ -154,10 +78,10 @@ class Tchat(cmds.Cog):
                 return
         
         if ctx.content.startswith('.e'):
+            self.bot.add_command(self.set_tchat)
             await self.stop(ctx)
         
         if self.rdy and ctx.content.startswith('.s'):
-
             if self.last_message_time is not None:
                 time_diff = (ctx.created_at - self.last_message_time).total_seconds()
 
@@ -171,9 +95,8 @@ class Tchat(cmds.Cog):
             self.vc_playing = True
             
             start_time = time.time()
-            text = ctx.content
+            text = ctx.content.replace('.s', '')
 
-            await ctx.channel.send("> listening")
             print("\nlistening:")
 
             try:
@@ -182,19 +105,27 @@ class Tchat(cmds.Cog):
                     self.messages.append({"role" : "user", "content" : text})
 
                     try:
-                        await ctx.channel.send("> generating")
                         print("\ngenerating:")
-                        say = self.textGen()
+                        say = Textgen.textGen(self.messages)
                         embed = discord.Embed(title=f"char: {self.char}", color=discord.Color.purple(), description=say)
                         await ctx.reply(embed=embed)
+                
+                        # audio_stream = f'https://api.streamelements.com/kappa/v2/speech?voice=Brian&text={say}'
+                        # source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(audio_stream))
 
-                        if self.reply_lang == 'th':
-                            audio_stream = f'https://tipme.in.th/api/tts/?text={self.trans(say)}&format=opus'
-                        elif self.reply_lang == 'en':
-                            audio_stream = f'https://api.streamelements.com/kappa/v2/speech?voice=Brian&text={say}'
+                        Voicegen.voicegen(text=say, save_foldername=f'{self.save_foldername}/voices')
 
-                        source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(audio_stream))
-                        self.payload.voice_client.play(source)
+                        audio_path = f'history/{self.char}/{self.guild_id}/voices/'
+                        audio_file = f'output.mp3'
+                        full_audio_path = os.path.join(audio_path, audio_file)
+
+                        try:
+                            source = discord.FFmpegPCMAudio(full_audio_path)
+                            self.payload.voice_client.play(source)
+                        except FileNotFoundError:
+                            print(f"Error: File not found - {audio_file}")
+                        except Exception as e:
+                            print(f"Error: {e}")
 
                         while self.payload.voice_client.is_playing():
                             await asyncio.sleep(1)
@@ -212,35 +143,23 @@ class Tchat(cmds.Cog):
         self.vc_playing = False
 
     @cmds.hybrid_command(description=f'characters: {characters}')
-    async def set_tchat(self, ctx, char: str, dialogue: Optional[Literal['new', 'con']] = 'prompts'):
+    async def set_tchat(self, ctx, char: str):
         if ctx.author.id not in config.OWNER:
             return await ctx.reply("> you have no perm to use this command!")
         
-        self.save_foldername = f'history/{char}'
+        self.guild_id = ctx.guild.id
+
+        if not os.path.exists(f'history/{char}') or not os.path.exists(f'history/{char}/{self.guild_id}/'):
+            if os.path.exists(f'prompts/{char}.txt'):
+                os.makedirs(f'history/{char}/{self.guild_id}/conversations', exist_ok=True)
+                os.makedirs(f'history/{char}/{self.guild_id}/voices', exist_ok=True)
+            else:
+                return await ctx.send(f"> character {char} not found")
+
+        self.save_foldername = f'history/{char}/{self.guild_id}'
         self.char = char
-        
-        if dialogue == 'con':
-            self.dialogue = 'history'
-            try:
-                count = 0
-                filename = os.path.join(self.save_foldername, f'conversation_{count}.txt')
-                while os.path.exists(filename):
-                    count += 1
-                    filename = os.path.join(self.save_foldername, f'conversation_{count}.txt')
-                if count == 0:
-                    raise Exception
-                
-                self.memIdx = list(range(count))
-            except:
-                self.memIdx = [0]
 
-            self.perm = 0
-
-        elif dialogue == 'new':
-            self.dialogue = 'prompts'
-            self.perm = 1
-
-        embed = discord.Embed(title=f"char settings: {self.char}", description=f'> index can be any within the list' if not self.perm else f'> index can be None', color=discord.Color.green())
+        embed = discord.Embed(title=f"char settings: {self.char}", description=f'> index can be any within the list' if not self.converIsNotExist else f'> index can be None', color=discord.Color.green())
         embed.add_field(name="index(ls)", value=f"{self.memIdx}", inline=False)
         embed.add_field(name="path", value=f"{self.dialogue}", inline=True)
         embed.add_field(name="reply_lang", value=f"{self.reply_lang}", inline=True)
@@ -248,8 +167,44 @@ class Tchat(cmds.Cog):
         self.char_is_set = True
 
     @cmds.hybrid_command(description=f'please remind that the command is still WIP')
-    async def tchat(self, ctx, index: int = None, reply_lang: Optional[Literal['th', 'en']] = None):
+    async def tchat(self, ctx):
         if self.char_is_set:
+            try:
+                count = 0
+                filename = os.path.join(f'{self.save_foldername}/conversations', f'conversation_{count}.txt')
+                while os.path.exists(filename):
+                    count += 1
+                    filename = os.path.join(f'{self.save_foldername}/conversations', f'conversation_{count}.txt')
+
+                if count == 0:
+                    self.converIsNotExist = 1
+                    self.dialogue = 'prompts'
+                else:
+                    self.converIsNotExist = 0
+                    self.dialogue = 'history'
+                
+                self.memIdx = list(range(count))
+            except:
+                self.memIdx = [0]
+
+            if self.converIsNotExist:
+                self.suffix = self.getSuffix(exist=False)
+                mount = '.txt'
+            else:
+                guild_id = ctx.guild.id
+                self.suffix = self.getSuffix(exist=True) - 1
+                mount = f'/{guild_id}/conversations/conversation_{self.suffix}.txt'
+
+            # whether prompos/REM.txt or history/char/guild_id/conversation_index.txt
+            with open(f'{self.dialogue}/{self.char}{mount}', "r", encoding='utf-8') as file:
+                mode = file.read()
+
+            if self.converIsNotExist:
+                self.messages  = [{"role": "system", "content": f"{mode}"}]
+            else:
+                self.messages = json.loads(mode)
+
+            # get bot in vc
             self.user_id = ctx.author.id
             voice_channel = ctx.author.voice.channel
             if self.voice and self.voice.is_connected():
@@ -257,30 +212,11 @@ class Tchat(cmds.Cog):
             else:
                 self.voice = await voice_channel.connect()
 
-            await ctx.send("``` voice chat on ```")
-
+            await ctx.send("``` voice chat on ```")        
+            self.bot.remove_command('set_tchat')
             self.rdy = 1
             self.payload = ctx
-            self.reply_lang = reply_lang
-                
-            if self.perm:
-                mount = '.txt'
-            else:
-                if index != None:
-                    mount = f'/conversation_{index}.txt'
-                else:
-                    embed = discord.Embed(title=f"ERR: index not found", description="> as you've chosen 'con', the index is required", color=discord.Color.red())
-                    return await ctx.send(embed=embed)
-
-            with open(f'{self.dialogue}/{self.char}{mount}', "r", encoding='utf-8') as file:
-                mode = file.read()
-
-            if self.perm:
-                self.messages  = [{"role": "system", "content": f"{mode}"}]
-                self.suffix = self.getSuffix()
-            else:
-                self.messages = json.loads(mode)
-                self.suffix = index
+            self.reply_lang = 'en'
 
         else:
             embed = discord.Embed(title=f"ERR: tchat is not set", description="> it seems like you've not set the character yet", color=discord.Color.red())
@@ -288,12 +224,14 @@ class Tchat(cmds.Cog):
             await ctx.send(embed=embed)
 
     @cmds.Cog.listener()
-    async def on_voice_state_update(self, member, before, after, ctx):
+    async def on_voice_state_update(self, member, before, after):
         if self.user_id is not None and self.rdy:
+
             #bot itself changed
             if member == self.bot.user:
                 if not after.channel:
                     self.voice = None
+
             #user changed
             elif member.id == self.user_id:
                 if before.channel != after.channel:

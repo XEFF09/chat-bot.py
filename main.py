@@ -11,7 +11,7 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 intents = Intents().all()
-bot = cmds.Bot(command_prefix='>>', intents=intents)
+bot = cmds.Bot(command_prefix='>> ', intents=intents)
 
 async def load():
     for f in os.listdir("./cogs"):
@@ -24,7 +24,7 @@ async def main():
 
 @bot.event
 async def on_ready():
-    print(f'{bot.user} is now ready!')
+    print(f'{bot.user} bot: ready')
 
 @bot.command()
 @cmds.guild_only()
@@ -39,6 +39,6 @@ async def sync(ctx: cmds.Context, spec: Optional[Literal['add', 'rem']] = None) 
         await ctx.bot.tree.sync(guild=None)
         synced = []
 
-    await ctx.channel.send(f"total {len(synced)} synced commands")
+    await ctx.channel.send(f"total synced: {len(synced)}")
 
 asyncio.run(main())
