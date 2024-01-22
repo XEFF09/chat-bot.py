@@ -10,7 +10,15 @@ import config
 
 from additionals import Textgen, Voicegen, Memorize
 
+import requests
+
+import google.generativeai as genai
+import google.ai.generativelanguage as glm
+
 load_dotenv()
+googleai_key = os.getenv('GOOGLEAI_KEY')
+genai.configure(api_key=googleai_key)
+model = genai.GenerativeModel('gemini-pro')
 
 # settings
 directory_path = './prompts'
@@ -19,14 +27,13 @@ timescoped = 5
 
 # async functions
 class Tchat(cmds.Cog):
+    
     def __init__(self, bot):
         self.bot = bot
-        self.rdy = 0
         self.payload = None
         self.reply_lang = 'en'
         self.char_is_set = False
         self.converIsNotExist = None
-        self.messages = None
         self.save_foldername = None
         self.char = None
         self.dialogue = 'prompts'
@@ -38,6 +45,8 @@ class Tchat(cmds.Cog):
         self.SPAM_COOLDOWN = 6
         self.last_message_time = None
         self.guild_id = None
+        self.chat = model.start_chat(history=[])
+        self.personality = []
 
     def getSuffix(self, exist: bool):
         os.makedirs(self.save_foldername, exist_ok=True)
@@ -52,7 +61,7 @@ class Tchat(cmds.Cog):
                 filename = os.path.join(f'{self.save_foldername}/conversations', f'{base_filename}_{count}.txt')
         else:
             with open(filename, 'w', encoding = 'utf-8') as file:
-                json.dump(self.messages, file, indent=4, ensure_ascii=False)
+                json.dump(self.personality, file, indent=4, ensure_ascii=False)
 
         return count
 
@@ -61,16 +70,24 @@ class Tchat(cmds.Cog):
         if self.vc_playing == False:
             self.rdy = 0
             print("\nleaving:")
-            await ctx.channel.send("> leaving..")
             await self.payload.send("``` voice chat off ```")
             await self.payload.voice_client.disconnect(force=True)
 
             try:
-                self.messages.append({"role" : "assistant", "content" : "yes"})
-                Memorize.memorize(messages=self.messages, save_foldername=f'{self.save_foldername}/conversations', suffix=self.suffix)
-            except:
-                print("memorize failed")
-                pass
+                messages = [self.personality[0]]
+                for i in self.chat.history:
+                    messages.append({
+                        "role": f"{i.role}",
+                        "parts": f"{[i.parts[0].text]}"
+                    })
+
+                Memorize.memorize(
+                    messages=(messages), 
+                    save_foldername=f'{self.save_foldername}/conversations', 
+                    suffix=self.suffix
+                )
+            except Exception as e:
+                print(f"Memorize Failed: {e}")
 
     @cmds.Cog.listener()
     async def on_message(self, ctx):
@@ -81,11 +98,11 @@ class Tchat(cmds.Cog):
             self.bot.add_command(self.set_tchat)
             await self.stop(ctx)
         
-        if self.rdy and ctx.content.startswith('.s'):
+        elif self.rdy and ctx.content.startswith('.s'):
             if self.last_message_time is not None:
-                time_diff = (ctx.created_at - self.last_message_time).total_seconds()
+                elapsed = (ctx.created_at - self.last_message_time).total_seconds()
 
-                if time_diff < self.SPAM_COOLDOWN:
+                if elapsed < self.SPAM_COOLDOWN:
                     self.vc_playing = False
                     self.last_message_time = ctx.created_at
                     return
@@ -102,11 +119,15 @@ class Tchat(cmds.Cog):
             try:
                 channel_id = ctx.channel.id
                 if ctx.channel.id == channel_id:
-                    self.messages.append({"role" : "user", "content" : text})
-
                     try:
                         print("\ngenerating:")
-                        say = Textgen.textGen(self.messages)
+                        img_path = None
+                        if ctx.attachments:
+                            if ctx.attachments[0].content_type.startswith('image'):
+                                await ctx.attachments[0].save(f'{self.save_foldername}/images/image.jpg')
+                                img_path = f'{self.save_foldername}/images/image.jpg'
+
+                        say = Textgen.textGen(text=text, img_path=img_path, chat=self.chat)
                         embed = discord.Embed(title=f"char: {self.char}", color=discord.Color.purple(), description=say)
                         await ctx.reply(embed=embed)
                 
@@ -128,7 +149,7 @@ class Tchat(cmds.Cog):
                             print(f"Error: {e}")
 
                         while self.payload.voice_client.is_playing():
-                            await asyncio.sleep(1)
+                            await asyncio.sleep(2)
                             
                         start_time = time.time()
                     except Exception as e:
@@ -137,7 +158,6 @@ class Tchat(cmds.Cog):
 
             except:
                 if time.time() - start_time > timescoped:
-                    await ctx.channel.send("> ~listening")
                     print("\n~listening:")
 
         self.vc_playing = False
@@ -149,24 +169,27 @@ class Tchat(cmds.Cog):
         
         self.guild_id = ctx.guild.id
 
-        if not os.path.exists(f'history/{char}') or not os.path.exists(f'history/{char}/{self.guild_id}/'):
+        char_history = f'history/{char}'
+
+        if not os.path.exists(char_history) or not os.path.exists(f'{char_history}/{self.guild_id}/'):
             if os.path.exists(f'prompts/{char}.txt'):
-                os.makedirs(f'history/{char}/{self.guild_id}/conversations', exist_ok=True)
-                os.makedirs(f'history/{char}/{self.guild_id}/voices', exist_ok=True)
+                os.makedirs(f'{char_history}/{self.guild_id}/conversations', exist_ok=True)
+                os.makedirs(f'{char_history}/{self.guild_id}/voices', exist_ok=True)
+                os.makedirs(f'{char_history}/{self.guild_id}/images', exist_ok=True)
             else:
                 return await ctx.send(f"> character {char} not found")
 
-        self.save_foldername = f'history/{char}/{self.guild_id}'
+        self.save_foldername = f'{char_history}/{self.guild_id}'
         self.char = char
 
-        embed = discord.Embed(title=f"char settings: {self.char}", description=f'> index can be any within the list' if not self.converIsNotExist else f'> index can be None', color=discord.Color.green())
+        embed = discord.Embed(title=f"char settings: {self.char}", color=discord.Color.green())
         embed.add_field(name="index(ls)", value=f"{self.memIdx}", inline=False)
         embed.add_field(name="path", value=f"{self.dialogue}", inline=True)
         embed.add_field(name="reply_lang", value=f"{self.reply_lang}", inline=True)
         await ctx.send(embed=embed)
         self.char_is_set = True
 
-    @cmds.hybrid_command(description=f'please remind that the command is still WIP')
+    @cmds.hybrid_command()
     async def tchat(self, ctx):
         if self.char_is_set:
             try:
@@ -195,28 +218,32 @@ class Tchat(cmds.Cog):
                 self.suffix = self.getSuffix(exist=True) - 1
                 mount = f'/{guild_id}/conversations/conversation_{self.suffix}.txt'
 
-            # whether prompos/REM.txt or history/char/guild_id/conversation_index.txt
+            # Todo: base personality
             with open(f'{self.dialogue}/{self.char}{mount}', "r", encoding='utf-8') as file:
                 mode = file.read()
 
             if self.converIsNotExist:
-                self.messages  = [{"role": "system", "content": f"{mode}"}]
-            else:
-                self.messages = json.loads(mode)
+                self.personality = [
+                    {
+                        "role": f"system",
+                        "parts": f"{[mode]}"
+                    }
+                ]
 
             # get bot in vc
-            self.user_id = ctx.author.id
-            voice_channel = ctx.author.voice.channel
+            self.payload = ctx
+            self.user_id = self.payload.author.id
+            voice_channel = self.payload.author.voice.channel
+
             if self.voice and self.voice.is_connected():
                 await self.voice.move_to(voice_channel)
             else:
                 self.voice = await voice_channel.connect()
 
-            await ctx.send("``` voice chat on ```")        
             self.bot.remove_command('set_tchat')
             self.rdy = 1
-            self.payload = ctx
             self.reply_lang = 'en'
+            await self.payload.send("``` voice chat on ```")        
 
         else:
             embed = discord.Embed(title=f"ERR: tchat is not set", description="> it seems like you've not set the character yet", color=discord.Color.red())
