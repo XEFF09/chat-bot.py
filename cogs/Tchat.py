@@ -74,11 +74,11 @@ class Tchat(cmds.Cog):
             await self.payload.voice_client.disconnect(force=True)
 
             try:
-                messages = [self.personality[0]]
+                messages = []
                 for i in self.chat.history:
                     messages.append({
                         "role": f"{i.role}",
-                        "parts": f"{[i.parts[0].text]}"
+                        "parts": f"{i.parts[0].text}"
                     })
 
                 Memorize.memorize(
@@ -182,17 +182,9 @@ class Tchat(cmds.Cog):
         self.save_foldername = f'{char_history}/{self.guild_id}'
         self.char = char
 
-        embed = discord.Embed(title=f"char settings: {self.char}", color=discord.Color.green())
-        embed.add_field(name="index(ls)", value=f"{self.memIdx}", inline=False)
-        embed.add_field(name="path", value=f"{self.dialogue}", inline=True)
-        embed.add_field(name="reply_lang", value=f"{self.reply_lang}", inline=True)
-        await ctx.send(embed=embed)
-        self.char_is_set = True
+        
 
-    @cmds.hybrid_command()
-    async def tchat(self, ctx):
-        if self.char_is_set:
-            try:
+        try:
                 count = 0
                 filename = os.path.join(f'{self.save_foldername}/conversations', f'conversation_{count}.txt')
                 while os.path.exists(filename):
@@ -207,28 +199,59 @@ class Tchat(cmds.Cog):
                     self.dialogue = 'history'
                 
                 self.memIdx = list(range(count))
-            except:
-                self.memIdx = [0]
+        except:
+            self.memIdx = [0]
 
-            if self.converIsNotExist:
-                self.suffix = self.getSuffix(exist=False)
-                mount = '.txt'
-            else:
-                guild_id = ctx.guild.id
-                self.suffix = self.getSuffix(exist=True) - 1
-                mount = f'/{guild_id}/conversations/conversation_{self.suffix}.txt'
+        if self.converIsNotExist:
+            self.suffix = self.getSuffix(exist=False)
+            mount = '.txt'
+        else:
+            guild_id = ctx.guild.id
+            self.suffix = self.getSuffix(exist=True) - 1
+            mount = f'/{guild_id}/conversations/conversation_{self.suffix}.txt'
 
-            # Todo: base personality
-            with open(f'{self.dialogue}/{self.char}{mount}', "r", encoding='utf-8') as file:
-                mode = file.read()
+        with open(f'{self.dialogue}/{self.char}{mount}', "r", encoding='utf-8') as file:
+            mode = file.read()
 
-            if self.converIsNotExist:
-                self.personality = [
-                    {
-                        "role": f"system",
-                        "parts": f"{[mode]}"
-                    }
-                ]
+        if self.converIsNotExist:
+            self.chat.history = [
+                glm.Content(
+                    role = "user",
+                    parts = [
+                        glm.Part(text=f"{mode}"),
+                    ],
+                ),
+                glm.Content(
+                    role = "model",
+                    parts = [
+                        glm.Part(text=f""),
+                    ],
+                )
+            ]
+        else:
+            with open(f'{self.dialogue}/{self.char}/{self.guild_id}/conversations/conversation_{self.suffix}.txt', "r", encoding='utf-8') as file:
+                memory = json.load(file)
+            
+            for i in memory:
+                self.chat.history.append(
+                    glm.Content(
+                        role = f"{i['role']}",
+                        parts = [
+                            glm.Part(text=f"{i['parts']}"),
+                        ],
+                    )
+                )
+
+        embed = discord.Embed(title=f"char settings: {self.char}", color=discord.Color.green())
+        embed.add_field(name="index(ls)", value=f"{self.memIdx}", inline=False)
+        embed.add_field(name="path", value=f"{self.dialogue}", inline=True)
+        embed.add_field(name="reply_lang", value=f"{self.reply_lang}", inline=True)
+        await ctx.send(embed=embed)
+        self.char_is_set = True
+
+    @cmds.hybrid_command()
+    async def tchat(self, ctx):
+        if self.char_is_set:
 
             # get bot in vc
             self.payload = ctx
