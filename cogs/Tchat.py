@@ -53,12 +53,12 @@ class Tchat(cmds.Cog):
         base_filename = 'conversation'
         count = 0
 
-        filename = os.path.join(f'{self.save_foldername}/conversations', f'{base_filename}_{count}.txt')
+        filename = os.path.join(f'{self.save_foldername}/conversations', f'{base_filename}_{count}.json')
 
         if exist == True:
             while os.path.exists(filename):
                 count += 1
-                filename = os.path.join(f'{self.save_foldername}/conversations', f'{base_filename}_{count}.txt')
+                filename = os.path.join(f'{self.save_foldername}/conversations', f'{base_filename}_{count}.json')
         else:
             with open(filename, 'w', encoding = 'utf-8') as file:
                 json.dump(self.personality, file, indent=4, ensure_ascii=False)
@@ -84,7 +84,9 @@ class Tchat(cmds.Cog):
                 Memorize.memorize(
                     messages=(messages), 
                     save_foldername=f'{self.save_foldername}/conversations', 
-                    suffix=self.suffix
+                    suffix=self.suffix,
+                    char=self.char,
+                    guild_id=self.guild_id
                 )
             except Exception as e:
                 print(f"Memorize Failed: {e}")
@@ -186,10 +188,10 @@ class Tchat(cmds.Cog):
 
         try:
                 count = 0
-                filename = os.path.join(f'{self.save_foldername}/conversations', f'conversation_{count}.txt')
+                filename = os.path.join(f'{self.save_foldername}/conversations', f'conversation_{count}.json')
                 while os.path.exists(filename):
                     count += 1
-                    filename = os.path.join(f'{self.save_foldername}/conversations', f'conversation_{count}.txt')
+                    filename = os.path.join(f'{self.save_foldername}/conversations', f'conversation_{count}.json')
 
                 if count == 0:
                     self.converIsNotExist = 1
@@ -208,7 +210,7 @@ class Tchat(cmds.Cog):
         else:
             guild_id = ctx.guild.id
             self.suffix = self.getSuffix(exist=True) - 1
-            mount = f'/{guild_id}/conversations/conversation_{self.suffix}.txt'
+            mount = f'/{guild_id}/conversations/conversation_{self.suffix}.json'
 
         with open(f'{self.dialogue}/{self.char}{mount}', "r", encoding='utf-8') as file:
             mode = file.read()
@@ -229,7 +231,7 @@ class Tchat(cmds.Cog):
                 )
             ]
         else:
-            with open(f'{self.dialogue}/{self.char}/{self.guild_id}/conversations/conversation_{self.suffix}.txt', "r", encoding='utf-8') as file:
+            with open(f'{self.dialogue}/{self.char}/{self.guild_id}/conversations/conversation_{self.suffix}.json', "r", encoding='utf-8') as file:
                 memory = json.load(file)
             
             for i in memory:

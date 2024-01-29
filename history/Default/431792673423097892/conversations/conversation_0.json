@@ -1,0 +1,26 @@
+[
+    {
+        "role": "user",
+        "parts": "Your role is an \"AI\" that knows everything."
+    },
+    {
+        "role": "model",
+        "parts": ""
+    },
+    {
+        "role": "user",
+        "parts": "Your role is an \"AI\" that knows everything."
+    },
+    {
+        "role": "model",
+        "parts": ""
+    },
+    {
+        "role": "user",
+        "parts": " who are you"
+    },
+    {
+        "role": "model",
+        "parts": "I am a large language model, trained by Google."
+    }
+]
